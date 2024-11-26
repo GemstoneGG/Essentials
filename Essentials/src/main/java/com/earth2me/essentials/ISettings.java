@@ -106,6 +106,10 @@ public interface ISettings extends IConf {
 
     boolean getRespawnAtHome();
 
+    String getRandomSpawnLocation();
+
+    String getRandomRespawnLocation();
+
     boolean isRespawnAtAnchor();
 
     Set getMultipleHomes();
@@ -416,6 +420,10 @@ public interface ISettings extends IConf {
     Tag getPrimaryColor();
 
     Tag getSecondaryColor();
+
+    BigDecimal getBaltopMinBalance();
+
+    long getBaltopMinPlaytime();
 
     enum KeepInvPolicy {
         KEEP,
