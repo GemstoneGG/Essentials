@@ -20,6 +20,7 @@ import net.ess3.provider.CommandSendListenerProvider;
 import net.ess3.provider.FormattedCommandAliasProvider;
 import net.ess3.provider.InventoryViewProvider;
 import net.ess3.provider.KnownCommandsProvider;
+import net.ess3.provider.TickCountProvider;
 import net.ess3.provider.providers.BukkitCommandSendListenerProvider;
 import net.ess3.provider.providers.PaperCommandSendListenerProvider;
 import net.essentialsx.api.v2.events.AsyncUserDataLoadEvent;
@@ -593,6 +594,17 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor, Runnabl
         if (ess.getSettings().isTeleportInvulnerability()) {
             user.enableInvulnerabilityAfterTeleport();
         }
+
+        // Mitigation for https://github.com/EssentialsX/Essentials/issues/4325
+        final TickCountProvider tickCountProvider = ess.provider(TickCountProvider.class);
+        if (tickCountProvider != null && ess.getSettings().isWorldChangePreserveFlying() && VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_17_R01)) {
+            if (user.isAuthorized("essentials.fly")) {
+                //noinspection DataFlowIssue - not real
+                if (event.getFrom().getWorld() != event.getTo().getWorld() && player.isFlying()) {
+                    user.setFlightTick(tickCountProvider.getTickCount());
+                }
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -746,8 +758,7 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor, Runnabl
 
         if (ess.getSettings().isWorldChangeFlyResetEnabled()) {
             if (user.getBase().getGameMode() != GameMode.CREATIVE
-                // COMPAT: String compare for 1.7.10
-                && !user.getBase().getGameMode().name().equals("SPECTATOR")
+                && user.getBase().getGameMode() != GameMode.SPECTATOR
                 && !user.isAuthorized("essentials.fly")) {
                 user.getBase().setFallDistance(0f);
                 user.getBase().setAllowFlight(false);
@@ -770,6 +781,13 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor, Runnabl
                 }
             }
         }
+
+        final TickCountProvider tickCountProvider = ess.provider(TickCountProvider.class);
+        if (tickCountProvider != null && user.getFlightTick() == tickCountProvider.getTickCount()) {
+            user.getBase().setAllowFlight(true);
+            user.getBase().setFlying(true);
+        }
+        user.setFlightTick(-1);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
