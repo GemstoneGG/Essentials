@@ -44,10 +44,10 @@ public abstract class PaperChatListenerProvider implements Listener {
         final PaperChatEvent paperChatEvent = wrap(event);
         onChatHighest(paperChatEvent);
 
-        final TextComponent format = serializer.deserialize(paperChatEvent.getFormat());
-        final TextComponent eventMessage = serializer.deserialize(paperChatEvent.getMessage());
-
         if (!event.isCancelled()) {
+            final TextComponent format = serializer.deserialize(paperChatEvent.getFormat());
+            final TextComponent eventMessage = serializer.deserialize(paperChatEvent.getMessage());
+
             event.renderer(ChatRenderer.viewerUnaware((player, displayName, message) ->
                     format.replaceText(builder -> builder
                             .match("%(\\d)\\$s").replacement((index, match) -> {
@@ -68,7 +68,7 @@ public abstract class PaperChatListenerProvider implements Listener {
             return paperChatEvent;
         }
 
-        paperChatEvent = new PaperChatEvent(event);
+        paperChatEvent = new PaperChatEvent(event, serializer);
         eventMap.put(event, paperChatEvent);
 
         return paperChatEvent;
