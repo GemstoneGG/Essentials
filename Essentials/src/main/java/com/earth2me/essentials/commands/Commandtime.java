@@ -83,18 +83,13 @@ public class Commandtime extends EssentialsCommand {
         final StringJoiner joiner = new StringJoiner(", ");
         final boolean timeAdd = add;
         for (final World world : worlds) {
-            long time = world.getTime();
-            if (!add) {
-                time -= time % 24000;
-            }
-            world.setTime(time + (add ? 0 : 24000) + timeTick);
             joiner.add(world.getName());
             ess.scheduleGlobalDelayedTask(() -> {
-                long worldTime = world.getTime();
+                long time = world.getTime();
                 if (!timeAdd) {
-                    worldTime -= worldTime % 24000;
+                    time -= time % 24000;
                 }
-                world.setTime(worldTime + (timeAdd ? 0 : 24000) + timeTick);
+                world.setTime(time + (timeAdd ? 0 : 24000) + timeTick);
             });
         }
 
