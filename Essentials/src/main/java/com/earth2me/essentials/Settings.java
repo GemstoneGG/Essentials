@@ -1681,11 +1681,6 @@ public class Settings implements net.ess3.api.ISettings {
     }
 
     @Override
-    public BigDecimal getPayUsageMultiplier() {
-        return new BigDecimal(config.getString("pay-usage-multiplier", "1.0"));
-    }
-
-    @Override
     public boolean isPayExcludesIgnoreList() {
         return config.getBoolean("pay-excludes-ignore-list", false);
     }

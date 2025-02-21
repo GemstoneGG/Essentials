@@ -331,8 +331,6 @@ public interface ISettings extends IConf {
 
     boolean isPayExcludesIgnoreList();
 
-    BigDecimal getPayUsageMultiplier();
-
     long getLastMessageReplyRecipientTimeout();
 
     boolean isMilkBucketEasterEggEnabled();
