@@ -83,7 +83,6 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
     private boolean ignoreMsg = false;
     private Boolean toggleShout;
     private boolean freeze = false;
-    private boolean joined = false;
 
     // User afk variables
     private String afkMessage;
@@ -1241,14 +1240,6 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
     @Override
     public void setFreeze(boolean freeze) {
         this.freeze = freeze;
-    }
-
-    public boolean hasJoined() {
-        return joined;
-    }
-
-    public void setJoined(boolean joined) {
-        this.joined = joined;
     }
 
     public boolean isBaltopExempt() {

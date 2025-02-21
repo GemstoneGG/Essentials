@@ -1279,6 +1279,10 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
         return schedulingProvider.runGlobalLocationalTaskRepeating(run, delay, period);
     }
 
+    public boolean isEntityThread(Entity entity) {
+        return schedulingProvider.isEntityThread(entity);
+    }
+
     @Override
     public boolean isRegionThread(Location location) {
         return schedulingProvider.isRegionThread(location);
@@ -1355,11 +1359,6 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
         } else {
             throw new IllegalArgumentException("Invalid command sender provided!");
         }
-    }
-
-    @Override
-    public int scheduleSyncRepeatingTask(final Runnable run, final long delay, final long period) {
-        return this.getScheduler().scheduleSyncRepeatingTask(this, run, delay, period);
     }
 
     @Override
