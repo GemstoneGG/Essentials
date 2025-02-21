@@ -74,7 +74,7 @@ public class EssentialsEntityListener implements Listener {
     }
 
     private void onPlayerVsPlayerDamage(final EntityDamageByEntityEvent event, final Player defender, final User attacker) {
-        if (ess.getSettings().getLoginAttackDelay() > 0 && (System.currentTimeMillis() < (attacker.getLastLogin() + ess.getSettings().getLoginAttackDelay())) && !attacker.isAuthorized("essentials.pvpdelay.exempt")) {
+        if (ess.getSettings().getLoginAttackDelay() > 0 && System.currentTimeMillis() < (attacker.getLastLogin() + ess.getSettings().getLoginAttackDelay()) && !attacker.isAuthorized("essentials.pvpdelay.exempt")) {
             event.setCancelled(true);
         }
 
@@ -110,7 +110,7 @@ public class EssentialsEntityListener implements Listener {
                         }
                     }
 
-                    ess.scheduleSyncDelayedTask(new PowerToolInteractTask());
+                    ess.scheduleEntityDelayedTask(attacker.getBase(), new PowerToolInteractTask());
 
                     event.setCancelled(true);
                     return;

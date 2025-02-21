@@ -134,7 +134,7 @@ public final class DiscordUtil {
 
         for (final Role role : roles) {
             final boolean blacklisted = blacklist.contains(role.getName()) || blacklist.contains(role.getId());
-            if ((blacklisted && !invert) || (!blacklisted && invert)) {
+            if (blacklisted && !invert || !blacklisted && invert) {
                 continue;
             }
 
@@ -235,10 +235,6 @@ public final class DiscordUtil {
             return;
         }
 
-        if (Bukkit.getServer().isPrimaryThread()) {
-            Bukkit.getPluginManager().callEvent(event);
-        } else {
-            Bukkit.getScheduler().runTask(jda.getPlugin(), () -> Bukkit.getPluginManager().callEvent(event));
-        }
+        Bukkit.getPluginManager().callEvent(event);
     }
 }

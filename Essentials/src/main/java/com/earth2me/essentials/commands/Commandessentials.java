@@ -574,7 +574,7 @@ public class Commandessentials extends EssentialsCommand {
                 final int homeCount = user.getHomes().size();
                 final double moneyCount = user.getMoney().doubleValue();
 
-                if ((lastLog == 0) || (timeDiff < milliDays) || (homeCount > homesArg) || (moneyCount > moneyArg)) {
+                if (lastLog == 0 || timeDiff < milliDays || homeCount > homesArg || moneyCount > moneyArg) {
                     continue;
                 }
 
@@ -638,7 +638,7 @@ public class Commandessentials extends EssentialsCommand {
                         for (String homeName : user.getHomes()) {
                             try {
                                 final Location home = user.getHome(homeName);
-                                if (!filterByWorld || (home != null && home.getWorld() != null && home.getWorld().getName().equals(args[2]))) {
+                                if (!filterByWorld || home != null && home.getWorld() != null && home.getWorld().getName().equals(args[2])) {
                                     user.delHome(homeName);
                                 }
                             } catch (Exception e) {
@@ -756,6 +756,7 @@ public class Commandessentials extends EssentialsCommand {
 
         sender.sendTl(serverMessageKey, "Server", server.getBukkitVersion() + " " + server.getVersion());
         sender.sendTl(serverMessageKey, "Brand", server.getName());
+        sender.sendTl("versionOutputFlags", "FOLIA:" + VersionUtil.FOLIA + ",FLAT:" + VersionUtil.PRE_FLATTENING + ",SUPSTAT:" + VersionUtil.getServerSupportStatus().name());
         sender.sendTl("versionOutputFine", "EssentialsX", essVer);
 
         for (final Plugin plugin : pm.getPlugins()) {

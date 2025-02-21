@@ -22,12 +22,12 @@ public class ExecuteCommand extends InteractionCommandImpl {
     public void onCommand(final InteractionEvent event) {
         final String command = event.getStringArgument("command");
         event.replyTl("discordCommandExecuteReply", command);
-        Bukkit.getScheduler().runTask(jda.getPlugin(), () -> {
+        jda.getPlugin().getEss().scheduleGlobalDelayedTask(() -> {
             try {
                 Bukkit.dispatchCommand(new DiscordCommandSender(jda, Bukkit.getConsoleSender(), message -> event.reply(MessageUtil.sanitizeDiscordMarkdown(message))).getSender(), command);
             } catch (CommandException e) {
                 // Check if this is a vanilla command, in which case we have to use a vanilla command sender :(
-                if (e.getMessage().contains("a vanilla command listener") || (e.getCause() != null && e.getCause().getMessage().contains("a vanilla command listener"))) {
+                if (e.getMessage().contains("a vanilla command listener") || e.getCause() != null && e.getCause().getMessage().contains("a vanilla command listener")) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
                     return;
                 }

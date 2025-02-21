@@ -18,6 +18,7 @@ import org.bukkit.Color;
 import org.bukkit.DyeColor;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Banner;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.enchantments.Enchantment;
@@ -33,6 +34,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -59,8 +61,8 @@ public class MetaItemStack {
         }
     }
 
-    private static final transient Pattern splitPattern = Pattern.compile("[:+',;.]");
-    private static final transient Pattern hexPattern = Pattern.compile("#([0-9a-fA-F]{6})");
+    private static final Pattern splitPattern = Pattern.compile("[:+',;.]");
+    private static final Pattern hexPattern = Pattern.compile("#([0-9a-fA-F]{6})");
     private ItemStack stack;
     private FireworkEffect.Builder builder = FireworkEffect.builder();
     private PotionEffectType pEffectType;
@@ -232,13 +234,18 @@ public class MetaItemStack {
             final ItemMeta meta = stack.getItemMeta();
             meta.setLore(lore);
             stack.setItemMeta(meta);
-        } else if ((split[0].equalsIgnoreCase("custom-model-data") || split[0].equalsIgnoreCase("cmd")) && hasMetaPermission(sender, "custom-model-data", false, true, ess)) {
+        } else if ((split[0].equalsIgnoreCase("custom-model-data") || split[0].equalsIgnoreCase("cmd") || split[0].equalsIgnoreCase("CustomModelData")) && hasMetaPermission(sender, "custom-model-data", false, true, ess)) {
             if (VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_14_R01)) {
                 final int value = split.length <= 1 ? 0 : Integer.parseInt(split[1]);
                 final ItemMeta meta = stack.getItemMeta();
                 meta.setCustomModelData(value);
                 stack.setItemMeta(meta);
             }
+        } else if ((split[0].equalsIgnoreCase("custom-armor-durability") || split[0].equalsIgnoreCase("CustomArmorDurability")) && hasMetaPermission(sender, "custom-armor-durability", false, true, ess)) {
+            final int value = split.length <= 1 ? 0 : Integer.parseInt(split[1]);
+            final ItemMeta meta = stack.getItemMeta();
+            meta.getPersistentDataContainer().set(new NamespacedKey("lgcustomarmor", "custom_armor_durability"), PersistentDataType.INTEGER, value);
+            stack.setItemMeta(meta);
         } else if (split[0].equalsIgnoreCase("unbreakable") && hasMetaPermission(sender, "unbreakable", false, true, ess)) {
             final boolean value = split.length <= 1 || Boolean.parseBoolean(split[1]);
             setUnbreakable(ess, stack, value);
@@ -381,7 +388,7 @@ public class MetaItemStack {
             return;
         }
 
-        if (split[0].equalsIgnoreCase("color") || split[0].equalsIgnoreCase("colour") || (allowShortName && split[0].equalsIgnoreCase("c"))) {
+        if (split[0].equalsIgnoreCase("color") || split[0].equalsIgnoreCase("colour") || allowShortName && split[0].equalsIgnoreCase("c")) {
             final List<Color> primaryColors = new ArrayList<>();
             final String[] colors = split[1].split(",");
             for (final String color : colors) {
@@ -396,7 +403,7 @@ public class MetaItemStack {
                 }
             }
             builder.withColor(primaryColors);
-        } else if (split[0].equalsIgnoreCase("shape") || split[0].equalsIgnoreCase("type") || (allowShortName && (split[0].equalsIgnoreCase("s") || split[0].equalsIgnoreCase("t")))) {
+        } else if (split[0].equalsIgnoreCase("shape") || split[0].equalsIgnoreCase("type") || allowShortName && (split[0].equalsIgnoreCase("s") || split[0].equalsIgnoreCase("t"))) {
             FireworkEffect.Type finalEffect = null;
             split[1] = split[1].equalsIgnoreCase("large") ? "BALL_LARGE" : split[1];
             if (fireworkShape.containsKey(split[1].toUpperCase())) {
@@ -407,7 +414,7 @@ public class MetaItemStack {
             if (finalEffect != null) {
                 builder.with(finalEffect);
             }
-        } else if (split[0].equalsIgnoreCase("fade") || (allowShortName && split[0].equalsIgnoreCase("f"))) {
+        } else if (split[0].equalsIgnoreCase("fade") || allowShortName && split[0].equalsIgnoreCase("f")) {
             final List<Color> fadeColors = new ArrayList<>();
             final String[] colors = split[1].split(",");
             for (final String color : colors) {
@@ -422,7 +429,7 @@ public class MetaItemStack {
             if (!fadeColors.isEmpty()) {
                 builder.withFade(fadeColors);
             }
-        } else if (split[0].equalsIgnoreCase("effect") || (allowShortName && split[0].equalsIgnoreCase("e"))) {
+        } else if (split[0].equalsIgnoreCase("effect") || allowShortName && split[0].equalsIgnoreCase("e")) {
             final String[] effects = split[1].split(",");
             for (final String effect : effects) {
                 if (effect.equalsIgnoreCase("twinkle")) {
@@ -443,7 +450,7 @@ public class MetaItemStack {
                 return;
             }
 
-            if (split[0].equalsIgnoreCase("color") || split[0].equalsIgnoreCase("colour") || (allowShortName && split[0].equalsIgnoreCase("c"))) {
+            if (split[0].equalsIgnoreCase("color") || split[0].equalsIgnoreCase("colour") || allowShortName && split[0].equalsIgnoreCase("c")) {
                 if (validFirework) {
                     if (!hasMetaPermission(sender, "firework", true, true, ess)) {
                         throw new TranslatableException("noMetaFirework");
@@ -472,7 +479,7 @@ public class MetaItemStack {
                     }
                 }
                 builder.withColor(primaryColors);
-            } else if (split[0].equalsIgnoreCase("shape") || split[0].equalsIgnoreCase("type") || (allowShortName && (split[0].equalsIgnoreCase("s") || split[0].equalsIgnoreCase("t")))) {
+            } else if (split[0].equalsIgnoreCase("shape") || split[0].equalsIgnoreCase("type") || allowShortName && (split[0].equalsIgnoreCase("s") || split[0].equalsIgnoreCase("t"))) {
                 FireworkEffect.Type finalEffect = null;
                 split[1] = split[1].equalsIgnoreCase("large") ? "BALL_LARGE" : split[1];
                 if (fireworkShape.containsKey(split[1].toUpperCase())) {
@@ -483,7 +490,7 @@ public class MetaItemStack {
                 if (finalEffect != null) {
                     builder.with(finalEffect);
                 }
-            } else if (split[0].equalsIgnoreCase("fade") || (allowShortName && split[0].equalsIgnoreCase("f"))) {
+            } else if (split[0].equalsIgnoreCase("fade") || allowShortName && split[0].equalsIgnoreCase("f")) {
                 final List<Color> fadeColors = new ArrayList<>();
                 final String[] colors = split[1].split(",");
                 for (final String color : colors) {
@@ -498,7 +505,7 @@ public class MetaItemStack {
                 if (!fadeColors.isEmpty()) {
                     builder.withFade(fadeColors);
                 }
-            } else if (split[0].equalsIgnoreCase("effect") || (allowShortName && split[0].equalsIgnoreCase("e"))) {
+            } else if (split[0].equalsIgnoreCase("effect") || allowShortName && split[0].equalsIgnoreCase("e")) {
                 final String[] effects = split[1].split(",");
                 for (final String effect : effects) {
                     if (effect.equalsIgnoreCase("twinkle")) {
@@ -521,7 +528,7 @@ public class MetaItemStack {
                 return;
             }
 
-            if (split[0].equalsIgnoreCase("effect") || (allowShortName && split[0].equalsIgnoreCase("e"))) {
+            if (split[0].equalsIgnoreCase("effect") || allowShortName && split[0].equalsIgnoreCase("e")) {
                 pEffectType = Potions.getByName(split[1]);
                 if (pEffectType != null && pEffectType.getName() != null) {
                     if (hasMetaPermission(sender, "potions." + pEffectType.getName().toLowerCase(Locale.ENGLISH), true, false, ess)) {
@@ -532,7 +539,7 @@ public class MetaItemStack {
                 } else {
                     throw new TranslatableException("invalidPotionMeta", split[1]);
                 }
-            } else if (split[0].equalsIgnoreCase("power") || (allowShortName && split[0].equalsIgnoreCase("p"))) {
+            } else if (split[0].equalsIgnoreCase("power") || allowShortName && split[0].equalsIgnoreCase("p")) {
                 if (NumberUtil.isInt(split[1])) {
                     validPotionPower = true;
                     power = Integer.parseInt(split[1]);
@@ -542,21 +549,21 @@ public class MetaItemStack {
                 } else {
                     throw new TranslatableException("invalidPotionMeta", split[1]);
                 }
-            } else if (split[0].equalsIgnoreCase("amplifier") || (allowShortName && split[0].equalsIgnoreCase("a"))) {
+            } else if (split[0].equalsIgnoreCase("amplifier") || allowShortName && split[0].equalsIgnoreCase("a")) {
                 if (NumberUtil.isInt(split[1])) {
                     validPotionPower = true;
                     power = Integer.parseInt(split[1]);
                 } else {
                     throw new TranslatableException("invalidPotionMeta", split[1]);
                 }
-            } else if (split[0].equalsIgnoreCase("duration") || (allowShortName && split[0].equalsIgnoreCase("d"))) {
+            } else if (split[0].equalsIgnoreCase("duration") || allowShortName && split[0].equalsIgnoreCase("d")) {
                 if (NumberUtil.isInt(split[1])) {
                     validPotionDuration = true;
                     duration = Integer.parseInt(split[1]) * 20; //Duration is in ticks by default, converted to seconds
                 } else {
                     throw new TranslatableException("invalidPotionMeta", split[1]);
                 }
-            } else if (split[0].equalsIgnoreCase("splash") || (allowShortName && split[0].equalsIgnoreCase("s"))) {
+            } else if (split[0].equalsIgnoreCase("splash") || allowShortName && split[0].equalsIgnoreCase("s")) {
                 isSplashPotion = Boolean.parseBoolean(split[1]);
             }
 
@@ -589,7 +596,7 @@ public class MetaItemStack {
                 }
             }
 
-            if (level < 0 || (!allowUnsafe && level > enchantment.getMaxLevel())) {
+            if (level < 0 || !allowUnsafe && level > enchantment.getMaxLevel()) {
                 level = enchantment.getMaxLevel();
             }
             addEnchantment(sender, allowUnsafe, enchantment, level);

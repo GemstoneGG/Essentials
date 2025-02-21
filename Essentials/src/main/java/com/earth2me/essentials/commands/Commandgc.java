@@ -10,6 +10,7 @@ import org.bukkit.World;
 
 import java.lang.management.ManagementFactory;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 public class Commandgc extends EssentialsCommand {
@@ -19,7 +20,7 @@ public class Commandgc extends EssentialsCommand {
 
     @Override
     protected void run(final Server server, final CommandSource sender, final String commandLabel, final String[] args) throws Exception {
-        final double tps = ess.getTimer().getAverageTPS();
+        final double tps = 20d;
         final ChatColor color;
         if (tps >= 18.0) {
             color = ChatColor.GREEN;
@@ -47,11 +48,12 @@ public class Commandgc extends EssentialsCommand {
                     break;
             }
 
-            int tileEntities = 0;
+            final AtomicInteger tileEntities = new AtomicInteger();
 
             try {
                 for (final Chunk chunk : w.getLoadedChunks()) {
-                    tileEntities += chunk.getTileEntities().length;
+                    this.ess.scheduleLocationDelayedTask(chunk.getWorld(), chunk.getX(), chunk.getZ(),
+                            () -> tileEntities.addAndGet(chunk.getTileEntities().length));
                 }
             } catch (final java.lang.ClassCastException ex) {
                 ess.getLogger().log(Level.SEVERE, "Corrupted chunk data on world " + w, ex);

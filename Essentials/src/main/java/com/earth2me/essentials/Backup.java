@@ -2,6 +2,7 @@ package com.earth2me.essentials;
 
 import com.earth2me.essentials.utils.AdventureUtil;
 import net.ess3.api.IEssentials;
+import net.ess3.provider.SchedulingProvider;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 
@@ -19,7 +20,7 @@ public class Backup implements Runnable {
     private transient final IEssentials ess;
     private final AtomicBoolean pendingShutdown = new AtomicBoolean(false);
     private transient boolean running = false;
-    private transient int taskId = -1;
+    private transient SchedulingProvider.EssentialsTask task = null;
     private transient boolean active = false;
     private transient CompletableFuture<Object> taskLock = null;
 
@@ -37,10 +38,10 @@ public class Backup implements Runnable {
 
     public synchronized void stopTask() {
         running = false;
-        if (taskId != -1) {
-            server.getScheduler().cancelTask(taskId);
+        if (task != null) {
+            task.cancel();
         }
-        taskId = -1;
+        task = null;
     }
 
     private synchronized void startTask() {
@@ -49,7 +50,7 @@ public class Backup implements Runnable {
             if (interval < 1200) {
                 return;
             }
-            taskId = ess.scheduleSyncRepeatingTask(this, interval, interval);
+            task = ess.scheduleGlobalRepeatingTask(this, interval, interval);
             running = true;
         }
     }
@@ -75,15 +76,15 @@ public class Backup implements Runnable {
         taskLock = new CompletableFuture<>();
         if ("save-all".equalsIgnoreCase(command)) {
             final CommandSender cs = server.getConsoleSender();
-            server.dispatchCommand(cs, "save-all");
+            ess.dispatchCommand(cs, "save-all");
             active = false;
             taskLock.complete(new Object());
             return;
         }
         ess.getLogger().log(Level.INFO, AdventureUtil.miniToLegacy(tlLiteral("backupStarted")));
         final CommandSender cs = server.getConsoleSender();
-        server.dispatchCommand(cs, "save-all");
-        server.dispatchCommand(cs, "save-off");
+        ess.dispatchCommand(cs, "save-all");
+        ess.dispatchCommand(cs, "save-off");
 
         ess.runTaskAsynchronously(() -> {
             try {
@@ -113,7 +114,7 @@ public class Backup implements Runnable {
                 class BackupEnableSaveTask implements Runnable {
                     @Override
                     public void run() {
-                        server.dispatchCommand(cs, "save-on");
+                        ess.dispatchCommand(cs, "save-on");
                         if (!ess.getSettings().isAlwaysRunBackup() && ess.getOnlinePlayers().isEmpty()) {
                             stopTask();
                         }
@@ -124,7 +125,7 @@ public class Backup implements Runnable {
                 }
 
                 if (!pendingShutdown.get()) {
-                    ess.scheduleSyncDelayedTask(new BackupEnableSaveTask());
+                    ess.scheduleGlobalDelayedTask(new BackupEnableSaveTask());
                 }
             }
         });

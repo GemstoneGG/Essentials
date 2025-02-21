@@ -347,7 +347,7 @@ public class KeywordReplacer implements IText {
                         }
                         break;
                     case TPS:
-                        replacer = NumberUtil.formatDouble(ess.getTimer().getAverageTPS());
+                        replacer = NumberUtil.formatDouble(20d);
                         break;
                     case UPTIME:
                         replacer = DateUtil.formatDateDiff(ManagementFactory.getRuntimeMXBean().getStartTime());

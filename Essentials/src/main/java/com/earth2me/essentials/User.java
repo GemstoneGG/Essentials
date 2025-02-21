@@ -83,6 +83,7 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
     private boolean ignoreMsg = false;
     private Boolean toggleShout;
     private boolean freeze = false;
+    private boolean joined = false;
 
     // User afk variables
     private String afkMessage;
@@ -320,7 +321,7 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
 
     private void _dispose() {
         if (!base.isOnline()) {
-            this.base = new OfflinePlayerStub(getConfigUUID(), ess.getServer());
+            this.base = new OfflinePlayerStub(getConfigUUID(), ess.getServer(), ess.getSettings().getDefaultWorld());
         }
         cleanup();
     }
@@ -539,7 +540,7 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
     @Override
     public String getDisplayName() {
         //noinspection ConstantConditions
-        return super.getBase().getDisplayName() == null || (ess.getSettings().hideDisplayNameInVanish() && isHidden()) ? super.getBase().getName() : super.getBase().getDisplayName();
+        return super.getBase().getDisplayName() == null || ess.getSettings().hideDisplayNameInVanish() && isHidden() ? super.getBase().getName() : super.getBase().getDisplayName();
     }
 
     @Override
@@ -640,7 +641,7 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
             return;
         }
 
-        this.getBase().setSleepingIgnored(this.isAuthorized("essentials.sleepingignored") || (set && ess.getSettings().sleepIgnoresAfkPlayers()));
+        this.getBase().setSleepingIgnored(this.isAuthorized("essentials.sleepingignored") || set && ess.getSettings().sleepIgnoresAfkPlayers());
         if (set && !isAfk()) {
             afkPosition = this.getLocation();
             this.afkSince = System.currentTimeMillis();
@@ -809,7 +810,7 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
     public void updateActivityOnChat(final boolean broadcast) {
         if (ess.getSettings().cancelAfkOnChat()) {
             //Chat happens async, make sure we have a sync context
-            ess.scheduleSyncDelayedTask(() -> updateActivity(broadcast, AfkStatusChangeEvent.Cause.CHAT));
+            ess.scheduleEntityDelayedTask(base, () -> updateActivity(broadcast, AfkStatusChangeEvent.Cause.CHAT));
         }
     }
 
@@ -1240,6 +1241,14 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
     @Override
     public void setFreeze(boolean freeze) {
         this.freeze = freeze;
+    }
+
+    public boolean hasJoined() {
+        return joined;
+    }
+
+    public void setJoined(boolean joined) {
+        this.joined = joined;
     }
 
     public boolean isBaltopExempt() {

@@ -41,7 +41,7 @@ public class EssentialsDiscord extends JavaPlugin implements IEssentialsModule {
 
         // JDK-8274349 - Mitigation for a regression in Java 17 on 1 core systems which was fixed in 17.0.2
         final String[] javaVersion = System.getProperty("java.version").split("\\.");
-        if (Runtime.getRuntime().availableProcessors() <= 1 && javaVersion[0].startsWith("17") && (javaVersion.length < 2 || (javaVersion[1].equals("0") && javaVersion[2].startsWith("1")))) {
+        if (Runtime.getRuntime().availableProcessors() <= 1 && javaVersion[0].startsWith("17") && (javaVersion.length < 2 || javaVersion[1].equals("0") && javaVersion[2].startsWith("1"))) {
             getLogger().log(Level.INFO, "Essentials is mitigating JDK-8274349");
             System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "1");
         }
@@ -61,7 +61,7 @@ public class EssentialsDiscord extends JavaPlugin implements IEssentialsModule {
             jda = new JDADiscordService(this);
             try {
                 jda.startup();
-                ess.scheduleSyncDelayedTask(() -> ((InteractionControllerImpl) jda.getInteractionController()).processBatchRegistration());
+                ess.scheduleInitTask(() -> ((InteractionControllerImpl) jda.getInteractionController()).processBatchRegistration());
             } catch (Exception e) {
                 getLogger().log(Level.SEVERE, AdventureUtil.miniToLegacy(tlLiteral("discordErrorLogin", e.getMessage())));
                 if (ess.getSettings().isDebug()) {

@@ -30,13 +30,13 @@ public class DiscordCommandDispatcher extends ListenerAdapter {
             }
 
             final String command = event.getMessage().getContentRaw();
-            Bukkit.getScheduler().runTask(jda.getPlugin(), () -> {
+            jda.getPlugin().getEss().scheduleGlobalDelayedTask(() -> {
                 try {
                     Bukkit.dispatchCommand(new DiscordCommandSender(jda, Bukkit.getConsoleSender(), message ->
                             event.getMessage().reply(message).queue()).getSender(), command);
                 } catch (CommandException e) {
                     // Check if this is a vanilla command, in which case we have to use a vanilla command sender :(
-                    if (e.getMessage().contains("a vanilla command listener") || (e.getCause() != null && e.getCause().getMessage().contains("a vanilla command listener"))) {
+                    if (e.getMessage().contains("a vanilla command listener") || e.getCause() != null && e.getCause().getMessage().contains("a vanilla command listener")) {
                         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
                         return;
                     }

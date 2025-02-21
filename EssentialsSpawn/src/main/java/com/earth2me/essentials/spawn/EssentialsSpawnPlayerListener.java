@@ -47,7 +47,7 @@ class EssentialsSpawnPlayerListener implements Listener {
             Location respawnLocation = null;
             if (ess.getSettings().isRespawnAtBed() &&
                     (!VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_16_1_R01) ||
-                    (!event.isAnchorSpawn() || ess.getSettings().isRespawnAtAnchor()))) {
+                    !event.isAnchorSpawn() || ess.getSettings().isRespawnAtAnchor())) {
                 // cannot nuke this sync load due to the event being sync so it would hand either way
                 if(VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_16_1_R01)) {
                     respawnLocation = user.getBase().getRespawnLocation();
@@ -88,7 +88,7 @@ class EssentialsSpawnPlayerListener implements Listener {
                 final User user = ess.getUser(player);
 
                 if (ess.getSettings().isUserInSpawnOnJoinGroup(user) && !user.isAuthorized("essentials.spawn-on-join.exempt")) {
-                    ess.scheduleSyncDelayedTask(() -> {
+                    ess.scheduleEntityDelayedTask(player, () -> {
                         final Location spawn = spawns.getSpawn(user.getGroup());
                         if (spawn == null) {
                             return;
@@ -111,10 +111,10 @@ class EssentialsSpawnPlayerListener implements Listener {
         final boolean spawnRandomly = tryRandomTeleport(user, ess.getSettings().getRandomSpawnLocation());
 
         if (!spawnRandomly && !"none".equalsIgnoreCase(ess.getSettings().getNewbieSpawn())) {
-            ess.scheduleSyncDelayedTask(new NewPlayerTeleport(user), 1L);
+            ess.scheduleEntityDelayedTask(player, new NewPlayerTeleport(user), 1L);
         }
 
-        ess.scheduleSyncDelayedTask(() -> {
+        ess.scheduleEntityDelayedTask(player, () -> {
             if (!user.getBase().isOnline()) {
                 return;
             }

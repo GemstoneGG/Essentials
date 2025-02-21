@@ -6,6 +6,7 @@ import com.earth2me.essentials.textreader.IText;
 import net.essentialsx.api.v2.ChatType;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.event.EventPriority;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 
@@ -41,6 +42,8 @@ public interface ISettings extends IConf {
     String getChatFormat(String group, ChatType chatType);
 
     String getWorldAlias(String world);
+
+    World getDefaultWorld();
 
     int getChatRadius();
 
@@ -327,6 +330,8 @@ public interface ISettings extends IConf {
     BigDecimal getMinimumPayAmount();
 
     boolean isPayExcludesIgnoreList();
+
+    BigDecimal getPayUsageMultiplier();
 
     long getLastMessageReplyRecipientTimeout();
 

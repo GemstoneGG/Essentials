@@ -20,9 +20,11 @@ import net.essentialsx.api.v2.ChatType;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.tag.Tag;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.event.EventPriority;
 import org.bukkit.inventory.ItemStack;
@@ -149,6 +151,7 @@ public class Settings implements net.ess3.api.ISettings {
     private double maxProjectileSpeed;
     private boolean removeEffectsOnHeal;
     private Map<String, String> worldAliases;
+    private String defaultWorld;
     private Tag primaryColor = DEFAULT_PRIMARY_COLOR;
     private Tag secondaryColor = DEFAULT_SECONDARY_COLOR;
     private Set<String> multiplierPerms;
@@ -749,6 +752,15 @@ public class Settings implements net.ess3.api.ISettings {
     }
 
     @Override
+    public World getDefaultWorld() {
+        return Bukkit.getWorld(defaultWorld);
+    }
+
+    private String _getDefaultWorld() {
+        return config.getString("default-world-name", "world");
+    }
+
+    @Override
     public boolean getAnnounceNewPlayers() {
         return !config.getString("newbies.announce-format", "-").isEmpty();
     }
@@ -835,7 +847,7 @@ public class Settings implements net.ess3.api.ISettings {
             if (reloadCount.get() < 2) {
                 // on startup: add plugins again in case they registered commands with the new API
                 // we need to schedule this task before any of the below tasks using _addAlternativeCommand.
-                ess.scheduleSyncDelayedTask(() -> {
+                ess.scheduleGlobalDelayedTask(() -> {
                     for (final Plugin plugin : ess.getServer().getPluginManager().getPlugins()) {
                         if (plugin.isEnabled()) {
                             ess.getAlternativeCommandsHandler().addPlugin(plugin);
@@ -861,7 +873,7 @@ public class Settings implements net.ess3.api.ISettings {
 
                     // This is 2 because Settings are reloaded twice in the startup lifecycle
                     if (reloadCount.get() < 2) {
-                        ess.scheduleSyncDelayedTask(() -> _addAlternativeCommand(effectiveAlias, toDisable));
+                        ess.scheduleGlobalDelayedTask(() -> _addAlternativeCommand(effectiveAlias, toDisable));
                     } else {
                         _addAlternativeCommand(effectiveAlias, toDisable);
                     }
@@ -876,7 +888,7 @@ public class Settings implements net.ess3.api.ISettings {
                     ess.getLogger().log(Level.INFO, "Syncing commands");
                 }
                 if (reloadCount.get() < 2) {
-                    ess.scheduleSyncDelayedTask(syncCommandsProvider::syncCommands);
+                    ess.scheduleGlobalDelayedTask(syncCommandsProvider::syncCommands);
                 } else {
                     syncCommandsProvider.syncCommands();
                 }
@@ -934,6 +946,7 @@ public class Settings implements net.ess3.api.ISettings {
         bindingItemPolicy = _getBindingItemsPolicy();
         currencySymbol = _getCurrencySymbol();
         worldAliases = _getWorldAliases();
+        defaultWorld = _getDefaultWorld();
         primaryColor = _getPrimaryColor();
         secondaryColor = _getSecondaryColor();
         multiplierPerms = _getMultiplierPerms();
@@ -1665,6 +1678,11 @@ public class Settings implements net.ess3.api.ISettings {
     @Override
     public BigDecimal getMinimumPayAmount() {
         return new BigDecimal(config.getString("minimum-pay-amount", "0.001"));
+    }
+
+    @Override
+    public BigDecimal getPayUsageMultiplier() {
+        return new BigDecimal(config.getString("pay-usage-multiplier", "1.0"));
     }
 
     @Override
