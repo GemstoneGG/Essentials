@@ -22,7 +22,7 @@ public class PaperChatListener extends PaperChatListenerProvider {
         }
 
         final Player player = event.getPlayer();
-        Bukkit.getScheduler().runTask(jda.getPlugin(), () -> {
+        jda.getPlugin().getEss().scheduleGlobalDelayedTask(() -> {
             final DiscordChatMessageEvent chatEvent = new DiscordChatMessageEvent(event.getPlayer(), event.getMessage(), ChatType.UNKNOWN);
             chatEvent.setCancelled(!jda.getSettings().isShowAllChat() && !event.recipients().containsAll(Bukkit.getOnlinePlayers()));
             Bukkit.getPluginManager().callEvent(chatEvent);
