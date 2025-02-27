@@ -13,6 +13,7 @@ import com.earth2me.essentials.utils.FormatUtil;
 import com.earth2me.essentials.utils.LocationUtil;
 import com.earth2me.essentials.utils.MaterialUtil;
 import com.earth2me.essentials.utils.VersionUtil;
+import com.google.common.collect.ImmutableSet;
 import io.papermc.lib.PaperLib;
 import net.ess3.api.IEssentials;
 import net.ess3.api.events.AfkStatusChangeEvent;
@@ -161,10 +162,18 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
         }
     }
 
+    //@EventHandler(priority = EventPriority.NORMAL)
+    //    public void onPlayerRespawn(final PlayerRespawnEvent event) {
+    //        final User user = ess.getUser(event.getPlayer());
     @EventHandler(priority = EventPriority.NORMAL)
-    public void onPlayerRespawn(final PlayerRespawnEvent event) {
-        final User user = ess.getUser(event.getPlayer());
-        updateCompass(user);
+    public void onPlayerRespawn(final InventoryCloseEvent event) {
+        final Player player = (Player) event.getPlayer();
+        if (event.getInventory().getType() != InventoryType.CRAFTING || !player.isDead() || !player.isOnline() || player.getHealth() > 0) {
+            return;
+        }
+
+        final User user = ess.getUser(player.getUniqueId());
+
         user.setDisplayNick();
 
         if (ess.getSettings().isTeleportInvulnerability()) {
@@ -527,18 +536,18 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
     // Makes the compass item ingame always point to the first essentials home.  #EasterEgg
     // EssentialsX: This can now optionally require a permission to enable, if set in the config.
     private void updateCompass(final User user) {
-        if (ess.getSettings().isCompassTowardsHomePerm() && !user.isAuthorized("essentials.home.compass")) return;
-
-        final Location loc = user.getHome(user.getLocation());
-        if (loc == null) {
-            PaperLib.getBedSpawnLocationAsync(user.getBase(), false).thenAccept(location -> {
-                if (location != null) {
-                    user.getBase().setCompassTarget(location);
-                }
-            });
-            return;
-        }
-        user.getBase().setCompassTarget(loc);
+//        if (ess.getSettings().isCompassTowardsHomePerm() && !user.isAuthorized("essentials.home.compass")) return;
+//
+//        final Location loc = user.getHome(user.getLocation());
+//        if (loc == null) {
+//            PaperLib.getBedSpawnLocationAsync(user.getBase(), false).thenAccept(location -> {
+//                if (location != null) {
+//                    user.getBase().setCompassTarget(location);
+//                }
+//            });
+//            return;
+//        }
+//        user.getBase().setCompassTarget(loc);
     }
 
     @EventHandler(priority = EventPriority.LOW)

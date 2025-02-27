@@ -6,12 +6,14 @@ import com.earth2me.essentials.User;
 import com.earth2me.essentials.textreader.IText;
 import com.earth2me.essentials.textreader.KeywordReplacer;
 import com.earth2me.essentials.utils.VersionUtil;
+import io.papermc.lib.PaperLib;
 import net.ess3.api.IEssentials;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
@@ -34,8 +36,13 @@ class EssentialsSpawnPlayerListener implements Listener {
         this.spawns = spawns;
     }
 
-    void onPlayerRespawn(final PlayerRespawnEvent event) {
-        final User user = ess.getUser(event.getPlayer());
+    void onPlayerRespawn(final InventoryCloseEvent event) {
+        final Player player = (Player) event.getPlayer();
+        if (event.getInventory().getType() != InventoryType.CRAFTING || !player.isDead() || !player.isOnline() || player.getHealth() > 0) {
+            return;
+        }
+
+        final User user = ess.getUser(player);
 
         if (user.isJailed() && user.getJail() != null && !user.getJail().isEmpty()) {
             return;
@@ -45,9 +52,9 @@ class EssentialsSpawnPlayerListener implements Listener {
             final Location home;
 
             Location respawnLocation = null;
-            if (ess.getSettings().isRespawnAtBed() &&
+            if (ess.getSettings().isRespawnAtBed()/* &&
                     (!VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_16_1_R01) ||
-                    !event.isAnchorSpawn() || ess.getSettings().isRespawnAtAnchor())) {
+                    !event.isAnchorSpawn() || ess.getSettings().isRespawnAtAnchor())*/) {
                 // cannot nuke this sync load due to the event being sync so it would hand either way
                 if(VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_16_1_R01)) {
                     respawnLocation = user.getBase().getRespawnLocation();
@@ -63,16 +70,17 @@ class EssentialsSpawnPlayerListener implements Listener {
             }
 
             if (home != null) {
-                event.setRespawnLocation(home);
+                ess.scheduleLocationDelayedTask(home, () -> PaperLib.teleportAsync(player, home), 1L);
                 return;
             }
         }
+
         if (tryRandomTeleport(user, ess.getSettings().getRandomRespawnLocation())) {
             return;
         }
         final Location spawn = spawns.getSpawn(user.getGroup());
         if (spawn != null) {
-            event.setRespawnLocation(spawn);
+            ess.scheduleLocationDelayedTask(spawn, () -> PaperLib.teleportAsync(player, spawn), 1L);
         }
     }
 
@@ -142,6 +150,17 @@ class EssentialsSpawnPlayerListener implements Listener {
         }, 2L);
     }
 
+    private boolean tryRandomTeleport(final User user, final String name) {
+        if (!ess.getRandomTeleport().hasLocation(name)) {
+            return false;
+        }
+        ess.getRandomTeleport().getRandomLocation(name).thenAccept(location -> {
+            final CompletableFuture<Boolean> future = new CompletableFuture<>();
+            user.getAsyncTeleport().now(location, false, PlayerTeleportEvent.TeleportCause.PLUGIN, future);
+        });
+        return true;
+    }
+
     private class NewPlayerTeleport implements Runnable {
         private final transient User user;
 
@@ -165,16 +184,5 @@ class EssentialsSpawnPlayerListener implements Listener {
                 user.getAsyncTeleport().now(spawn, false, TeleportCause.PLUGIN, future);
             }
         }
-    }
-
-    private boolean tryRandomTeleport(final User user, final String name) {
-        if (!ess.getRandomTeleport().hasLocation(name)) {
-            return false;
-        }
-        ess.getRandomTeleport().getRandomLocation(name).thenAccept(location -> {
-            final CompletableFuture<Boolean> future = new CompletableFuture<>();
-            user.getAsyncTeleport().now(location, false, PlayerTeleportEvent.TeleportCause.PLUGIN, future);
-        });
-        return true;
     }
 }
