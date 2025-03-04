@@ -13,7 +13,6 @@ import com.earth2me.essentials.utils.FormatUtil;
 import com.earth2me.essentials.utils.LocationUtil;
 import com.earth2me.essentials.utils.MaterialUtil;
 import com.earth2me.essentials.utils.VersionUtil;
-import com.google.common.collect.ImmutableSet;
 import io.papermc.lib.PaperLib;
 import net.ess3.api.IEssentials;
 import net.ess3.api.events.AfkStatusChangeEvent;
@@ -58,7 +57,6 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.inventory.Inventory;
@@ -536,18 +534,6 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
     // Makes the compass item ingame always point to the first essentials home.  #EasterEgg
     // EssentialsX: This can now optionally require a permission to enable, if set in the config.
     private void updateCompass(final User user) {
-//        if (ess.getSettings().isCompassTowardsHomePerm() && !user.isAuthorized("essentials.home.compass")) return;
-//
-//        final Location loc = user.getHome(user.getLocation());
-//        if (loc == null) {
-//            PaperLib.getBedSpawnLocationAsync(user.getBase(), false).thenAccept(location -> {
-//                if (location != null) {
-//                    user.getBase().setCompassTarget(location);
-//                }
-//            });
-//            return;
-//        }
-//        user.getBase().setCompassTarget(loc);
     }
 
     @EventHandler(priority = EventPriority.LOW)
