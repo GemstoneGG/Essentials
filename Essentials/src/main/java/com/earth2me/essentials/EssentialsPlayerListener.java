@@ -160,9 +160,6 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
         }
     }
 
-    //@EventHandler(priority = EventPriority.NORMAL)
-    //    public void onPlayerRespawn(final PlayerRespawnEvent event) {
-    //        final User user = ess.getUser(event.getPlayer());
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerRespawn(final InventoryCloseEvent event) {
         final Player player = (Player) event.getPlayer();
