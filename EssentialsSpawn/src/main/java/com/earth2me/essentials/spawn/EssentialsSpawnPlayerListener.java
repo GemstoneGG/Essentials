@@ -6,7 +6,6 @@ import com.earth2me.essentials.User;
 import com.earth2me.essentials.textreader.IText;
 import com.earth2me.essentials.textreader.KeywordReplacer;
 import com.earth2me.essentials.utils.VersionUtil;
-import io.papermc.lib.PaperLib;
 import net.ess3.api.IEssentials;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -70,8 +69,10 @@ class EssentialsSpawnPlayerListener implements Listener {
             }
 
             if (home != null) {
-                ess.scheduleLocationDelayedTask(home, () -> PaperLib.teleportAsync(player, home), 1L);
-                return;
+                ess.scheduleLocationDelayedTask(home, () -> {
+                    final CompletableFuture<Boolean> future = new CompletableFuture<>();
+                    user.getAsyncTeleport().now(home, false, TeleportCause.PLUGIN, future);
+                }, 1L);
             }
         }
 
@@ -80,7 +81,10 @@ class EssentialsSpawnPlayerListener implements Listener {
         }
         final Location spawn = spawns.getSpawn(user.getGroup());
         if (spawn != null) {
-            ess.scheduleLocationDelayedTask(spawn, () -> PaperLib.teleportAsync(player, spawn), 1L);
+            ess.scheduleLocationDelayedTask(spawn, () -> {
+                final CompletableFuture<Boolean> future = new CompletableFuture<>();
+                user.getAsyncTeleport().now(spawn, false, TeleportCause.PLUGIN, future);
+            }, 1L);
         }
     }
 
