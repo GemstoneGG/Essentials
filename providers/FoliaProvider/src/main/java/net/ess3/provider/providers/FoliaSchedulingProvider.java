@@ -61,25 +61,16 @@ public class FoliaSchedulingProvider implements SchedulingProvider, Listener {
 
     @Override
     public EssentialsTask runEntityTask(Entity entity, Runnable runnable, long delay) {
-        final ScheduledTask task = entity.getScheduler().runDelayed(
-            plugin,
-            scheduledTask -> runnable.run(),
-            () -> plugin.getLogger().warning("entity is removed!"),
-            delay
-        );
-        return task != null ? task::cancel : () -> {};
+        final ScheduledTask task = entity.getScheduler().runDelayed(plugin, scheduledTask -> runnable.run(), null, delay);
+        return task != null ? task::cancel : () -> {
+        };
     }
 
     @Override
     public EssentialsTask runEntityTaskRepeating(Entity entity, Runnable runnable, long delay, long period) {
-        final ScheduledTask task = entity.getScheduler().runAtFixedRate(
-            plugin,
-            scheduledTask -> runnable.run(),
-            () -> plugin.getLogger().warning("entity is removed!"),
-            delay,
-            period
-        );
-        return task != null ? task::cancel : () -> {};
+        final ScheduledTask task = entity.getScheduler().runAtFixedRate(plugin, scheduledTask -> runnable.run(), null, delay, period);
+        return task != null ? task::cancel : () -> {
+        };
     }
 
     @Override
