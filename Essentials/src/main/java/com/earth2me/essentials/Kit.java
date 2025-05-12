@@ -246,7 +246,11 @@ public class Kit {
                     if (maxStackSize != 0) {
                         itemStack.setAmount(Math.min(spillAmount, itemStack.getMaxStackSize()));
                     }
-                    user.getWorld().dropItemNaturally(user.getLocation(), itemStack);
+                    ess.scheduleLocationDelayedTask(user.getLocation(), () -> {
+                        if (user.getWorld() != null) {
+                            user.getWorld().dropItemNaturally(user.getLocation(), itemStack);
+                        }
+                    });
                     spillAmount -= itemStack.getAmount();
                 }
                 spew = true;
