@@ -76,6 +76,11 @@ public class AsyncTimedTeleport implements Runnable {
             return;
         }
 
+        if (!ess.isEnabled()) {
+            cancelTimer(false);
+            return;
+        }
+
         final IUser teleportUser = ess.getUser(this.timer_teleportee);
 
         if (teleportUser == null || !teleportUser.getBase().isOnline()) {
