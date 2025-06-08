@@ -3,13 +3,10 @@ package com.earth2me.essentials;
 import com.earth2me.essentials.utils.DateUtil;
 import com.earth2me.essentials.utils.LocationUtil;
 import com.earth2me.essentials.utils.VersionUtil;
-import org.bukkit.plugin.InvalidDescriptionException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockbukkit.mockbukkit.MockBukkit;
-import org.mockbukkit.mockbukkit.ServerMock;
 
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
@@ -17,7 +14,6 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class UtilTest {
 
@@ -25,21 +21,13 @@ public class UtilTest {
 
     @BeforeEach
     public void setUp() {
-        final ServerMock server = MockBukkit.mock();
+        MockBukkit.mock();
         Essentials.TESTING = true;
         ess = MockBukkit.load(Essentials.class);
-        try {
-            ess.setupForTesting(server);
-        } catch (final InvalidDescriptionException ex) {
-            fail("InvalidDescriptionException");
-        } catch (final IOException ex) {
-            fail("IOException");
-        }
     }
 
     @AfterEach
     public void afterEach() {
-        ess.tearDownForTesting();
         MockBukkit.unmock();
     }
 
