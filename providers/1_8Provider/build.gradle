@@ -5,7 +5,6 @@ plugins {
 dependencies {
     implementation(project(':providers:BaseProviders')) {
         exclude(module: 'spigot-api')
-        exclude(module: 'paper-api')
     }
     implementation 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
 }

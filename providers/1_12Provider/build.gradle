@@ -5,7 +5,6 @@ plugins {
 dependencies {
     implementation(project(':providers:BaseProviders')) {
         exclude(module: 'spigot-api')
-        exclude(module: 'paper-api')
     }
     api project(':providers:NMSReflectionProvider')
 }
