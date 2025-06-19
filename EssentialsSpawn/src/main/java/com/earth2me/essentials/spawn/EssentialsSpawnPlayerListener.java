@@ -15,6 +15,7 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Locale;
@@ -50,17 +51,7 @@ class EssentialsSpawnPlayerListener implements Listener {
         if (ess.getSettings().getRespawnAtHome()) {
             final Location home;
 
-            Location respawnLocation = null;
-            if (ess.getSettings().isRespawnAtBed()/* &&
-                    (!VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_16_1_R01) ||
-                    !event.isAnchorSpawn() || ess.getSettings().isRespawnAtAnchor())*/) {
-                // cannot nuke this sync load due to the event being sync so it would hand either way
-                if(VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_16_1_R01)) {
-                    respawnLocation = user.getBase().getRespawnLocation();
-                } else { // For versions prior to 1.16.
-                    respawnLocation = user.getBase().getBedSpawnLocation();
-                }
-            }
+            final Location respawnLocation = getRespawnLocation(user);
 
             if (respawnLocation != null) {
                 home = respawnLocation;
@@ -86,6 +77,22 @@ class EssentialsSpawnPlayerListener implements Listener {
                 user.getAsyncTeleport().now(spawn, false, TeleportCause.PLUGIN, future);
             }, 1L);
         }
+    }
+
+    @Nullable
+    private Location getRespawnLocation(User user) {
+        Location respawnLocation = null;
+        // Since this is Folia, the respawn handler will perform differently.
+        // That said, anchor respawns are effectively stripped to mitigate issues.
+        if (ess.getSettings().isRespawnAtBed()) {
+            // cannot nuke this sync load due to the event being sync so it would hand either way
+            if (VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_16_1_R01)) {
+                respawnLocation = user.getBase().getRespawnLocation();
+            } else { // For versions prior to 1.16.
+                respawnLocation = user.getBase().getBedSpawnLocation();
+            }
+        }
+        return respawnLocation;
     }
 
     void onPlayerJoin(final PlayerJoinEvent event) {
