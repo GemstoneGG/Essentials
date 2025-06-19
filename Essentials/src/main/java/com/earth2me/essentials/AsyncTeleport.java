@@ -173,38 +173,33 @@ public class AsyncTeleport implements IAsyncTeleport {
             targetLoc.setZ(LocationUtil.getZInsideWorldBorder(targetLoc.getWorld(), targetLoc.getBlockZ()));
         }
         PaperLib.getChunkAtAsync(targetLoc.getWorld(), targetLoc.getBlockX() >> 4, targetLoc.getBlockZ() >> 4, true, true).thenAccept(chunk -> {
-            final Location loc = targetLoc;
-            final int x = loc.getBlockX();
-            final int y = loc.getBlockY();
-            final int z = loc.getBlockZ();
-
-            ess.ensureRegion(loc, () -> {
-                if (LocationUtil.isBlockUnsafeForUser(ess, teleportee, loc.getWorld(), x, y, z)) {
+            ess.ensureRegion(targetLoc, () -> {
+                if (LocationUtil.isBlockUnsafeForUser(ess, teleportee, targetLoc.getWorld(), targetLoc.getBlockX(), targetLoc.getBlockY(), targetLoc.getBlockZ())) {
                     if (ess.getSettings().isTeleportSafetyEnabled()) {
                         if (ess.getSettings().isForceDisableTeleportSafety()) {
-                            PaperLib.teleportAsync(teleportee.getBase(), loc, cause);
+                            PaperLib.teleportAsync(teleportee.getBase(), targetLoc, cause);
                         } else {
                             try {
                                 //There's a chance the safer location is outside the loaded chunk so still teleport async here.
-                                PaperLib.teleportAsync(teleportee.getBase(), LocationUtil.getSafeDestination(ess, teleportee, loc), cause);
+                                PaperLib.teleportAsync(teleportee.getBase(), LocationUtil.getSafeDestination(ess, teleportee, targetLoc), cause);
                             } catch (final Exception e) {
                                 future.completeExceptionally(e);
                                 return;
                             }
                         }
                     } else {
-                        future.completeExceptionally(new TranslatableException("unsafeTeleportDestination", loc.getWorld().getName(), x, y, z));
+                        future.completeExceptionally(new TranslatableException("unsafeTeleportDestination", targetLoc.getWorld().getName(), targetLoc.getBlockX(), targetLoc.getBlockY(), targetLoc.getBlockZ()));
                         return;
                     }
                 } else {
                     if (ess.getSettings().isForceDisableTeleportSafety()) {
-                        PaperLib.teleportAsync(teleportee.getBase(), loc, cause);
+                        PaperLib.teleportAsync(teleportee.getBase(), targetLoc, cause);
                     } else {
-                        Location dest = loc;
+                        Location dest = targetLoc;
                         if (ess.getSettings().isTeleportToCenterLocation()) {
-                            dest = LocationUtil.getRoundedDestination(loc);
+                            dest = LocationUtil.getRoundedDestination(targetLoc);
                         }
-                        //There's a *small* chance the rounded destination produces a location outside the loaded chunk so still teleport async here.
+                        // There's a *small* chance the rounded destination produces a location outside the loaded chunk so still teleport async here.
                         PaperLib.teleportAsync(teleportee.getBase(), dest, cause);
                     }
                 }

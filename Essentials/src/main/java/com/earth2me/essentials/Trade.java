@@ -69,9 +69,9 @@ public class Trade {
 
     public static void log(final String type, final String subtype, final String event, final String sender, final Trade charge, final String receiver, final Trade pay, final Location loc, final BigDecimal endBalance, final IEssentials ess) {
         //isEcoLogUpdateEnabled() - This refers to log entries with no location, ie API updates #EasterEgg
-        //isEcoLogEnabled() - This refers to log entries with with location, ie /pay /sell and eco signs.
+        //isEcoLogEnabled() - This refers to log entries with location, ie /pay /sell and eco signs.
 
-        if ((loc == null && !ess.getSettings().isEcoLogUpdateEnabled()) || (loc != null && !ess.getSettings().isEcoLogEnabled())) {
+        if (loc == null && !ess.getSettings().isEcoLogUpdateEnabled() || loc != null && !ess.getSettings().isEcoLogEnabled()) {
             return;
         }
         if (fw == null) {
@@ -244,7 +244,7 @@ public class Trade {
                         int spillAmount = itemStack.getAmount();
                         while (spillAmount > 0) {
                             itemStack.setAmount(Math.min(spillAmount, itemStack.getMaxStackSize()));
-                            user.getBase().getWorld().dropItemNaturally(user.getBase().getLocation(), itemStack);
+                            ess.scheduleLocationDelayedTask(user.getBase().getLocation(), () -> user.getBase().getWorld().dropItemNaturally(user.getBase().getLocation(), itemStack));
                             spillAmount -= itemStack.getAmount();
                         }
                     }

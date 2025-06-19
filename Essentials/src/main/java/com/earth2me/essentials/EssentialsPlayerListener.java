@@ -168,7 +168,7 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
         }
 
         final User user = ess.getUser(player.getUniqueId());
-
+        updateCompass(user);
         user.setDisplayNick();
 
         if (ess.getSettings().isTeleportInvulnerability()) {
@@ -531,12 +531,24 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
     // Makes the compass item ingame always point to the first essentials home.  #EasterEgg
     // EssentialsX: This can now optionally require a permission to enable, if set in the config.
     private void updateCompass(final User user) {
+        if (ess.getSettings().isCompassTowardsHomePerm() && !user.isAuthorized("essentials.home.compass")) return;
+
+        final Location loc = user.getHome(user.getLocation());
+        if (loc == null) {
+            PaperLib.getBedSpawnLocationAsync(user.getBase(), false).thenAccept(location -> {
+                if (location != null) {
+                    user.getBase().setCompassTarget(location);
+                }
+            });
+            return;
+        }
+        user.getBase().setCompassTarget(loc);
     }
 
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerLoginBanned(final PlayerLoginEvent event) {
         if (event.getResult() == Result.KICK_BANNED) {
-            BanEntry banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getPlayer().getName());
+            BanEntry<?> banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getPlayer().getName());
             if (banEntry != null) {
                 final Date banExpiry = banEntry.getExpiration();
                 if (banExpiry != null) {
@@ -1083,7 +1095,7 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
         }
 
         /**
-         * Returns true if all of the following are true:
+         * Returns true if all the following are true:
          * - The command is a plugin command
          * - The plugin command is from an official EssentialsX plugin or addon
          * - There is no known alternative OR the alternative is overridden by Essentials
