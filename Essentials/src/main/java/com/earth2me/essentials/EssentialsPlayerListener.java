@@ -74,6 +74,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -533,16 +534,21 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
     private void updateCompass(final User user) {
         if (ess.getSettings().isCompassTowardsHomePerm() && !user.isAuthorized("essentials.home.compass")) return;
 
-        final Location loc = user.getHome(user.getLocation());
-        if (loc == null) {
-            PaperLib.getBedSpawnLocationAsync(user.getBase(), false).thenAccept(location -> {
-                if (location != null) {
-                    user.getBase().setCompassTarget(location);
-                }
-            });
+        final Location home = user.getHome(user.getLocation());
+        if (home != null) {
+            user.getBase().setCompassTarget(home);
             return;
         }
-        user.getBase().setCompassTarget(loc);
+
+        final Location bed = user.getBase().getBedSpawnLocation();
+        if (bed == null) return;
+
+        ess.scheduleEntityDelayedTask(user.getBase(), () -> {
+            final Location respawn = user.getBase().getRespawnLocation();
+            if (respawn != null && Objects.equals(respawn.getWorld(), user.getBase().getWorld())) {
+                user.getBase().setCompassTarget(respawn);
+            }
+        });
     }
 
     @EventHandler(priority = EventPriority.LOW)
