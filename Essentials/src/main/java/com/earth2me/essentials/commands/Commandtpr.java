@@ -102,7 +102,6 @@ public class Commandtpr extends EssentialsCommand {
 
             userToTeleport.sendTl("tprSuccess");
             sender.sendTl("tprOtherUser", userToTeleport.getDisplayName());
-
             (event.isModified() ? randomTeleport.getRandomLocation(event.getCenter(), event.getMinRange(), event.getMaxRange()) : randomTeleport.getRandomLocation(potentialLocation))
                     .thenAccept(location -> {
                         final CompletableFuture<Boolean> future = getNewExceptionFuture(sender, commandLabel);
