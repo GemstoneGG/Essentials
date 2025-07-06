@@ -30,9 +30,11 @@ public class Commandtpr extends EssentialsCommand {
         final String randomLocationName;
         final User target;
         if (args.length == 0) {
+            // No arguments provided, use the default random teleport location
             randomLocationName = randomTeleport.getDefaultLocation().replace("{world}", user.getLocation().getWorld().getName());
             target = user;
         } else {
+            // Use the first argument as the location name
             randomLocationName = args[0];
             if (!randomTeleport.hasLocation(randomLocationName)) {
                 throw new TranslatableException("tprNotExist");
@@ -84,6 +86,7 @@ public class Commandtpr extends EssentialsCommand {
         final RandomTeleport randomTeleport = ess.getRandomTeleport();
         final User userToTeleport = getPlayer(server, sender, args, 1);
 
+        // Validate the location name - only use if it exists and sender has permission
         final String potentialLocation = args[0];
         if (!randomTeleport.hasLocation(potentialLocation)) {
             throw new TranslatableException("tprNotExist");
