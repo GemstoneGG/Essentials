@@ -47,9 +47,7 @@ public abstract class UserData extends PlayerExtension implements IConf {
         }
 
         config = new EssentialsUserConfiguration(base.getName(), base.getUniqueId(), new File(folder, base.getUniqueId() + ".yml"));
-        config.setSaveHook(() -> {
-            config.setRootHolder(UserConfigHolder.class, holder);
-        });
+        config.setSaveHook(() -> config.setRootHolder(UserConfigHolder.class, holder));
         reloadConfig();
 
         if (config.getUsername() == null) {
@@ -63,7 +61,7 @@ public abstract class UserData extends PlayerExtension implements IConf {
             ess.getLogger().warning("Unable to delete data file for " + config.getFile().getName());
         }
         if (config.getUsername() != null) {
-            final ModernUserMap users = (ModernUserMap) ess.getUsers();
+            final ModernUserMap users = ess.getUsers();
             users.invalidate(config.getUuid());
             if (isNPC()) {
                 final String name = ess.getSettings().isSafeUsermap() ? StringUtil.safeString(config.getUsername()) : config.getUsername();

@@ -425,7 +425,7 @@ public class EssentialsConfiguration {
     /**
      * Begins a transaction.
      * <p>
-     * A transaction informs Essentials to pause the saving of data. This is should be used when
+     * A transaction informs Essentials to pause the saving of data. This is to be used when
      * bulk operations are being done and data shouldn't be saved until after the transaction has
      * been completed.
      */
