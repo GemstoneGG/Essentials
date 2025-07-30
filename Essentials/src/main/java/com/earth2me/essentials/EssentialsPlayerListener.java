@@ -46,6 +46,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -53,8 +55,6 @@ import org.bukkit.event.player.PlayerEggThrowEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -540,37 +540,41 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
     }
 
     @EventHandler(priority = EventPriority.LOW)
-    public void onPlayerLoginBanned(final PlayerLoginEvent event) {
-        if (event.getResult() == Result.KICK_BANNED) {
-            BanEntry<?> banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getPlayer().getName());
-            if (banEntry != null) {
-                final Date banExpiry = banEntry.getExpiration();
-                if (banExpiry != null) {
-                    final String expiry = DateUtil.formatDateDiff(banExpiry.getTime());
-                    event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("tempbanJoin", expiry, banEntry.getReason())));
-                } else {
-                    event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("banJoin", banEntry.getReason())));
-                }
+    public void onPlayerPreLoginCheckBan(final AsyncPlayerPreLoginEvent event) {
+        if (event.getLoginResult() != Result.ALLOWED) {
+            return;
+        }
+
+        BanEntry<?> banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getName());
+        if (banEntry != null) {
+            final Date banExpiry = banEntry.getExpiration();
+            if (banExpiry != null) {
+                final String expiry = DateUtil.formatDateDiff(banExpiry.getTime());
+                event.disallow(Result.KICK_BANNED, AdventureUtil.miniToLegacy(tlLiteral("tempbanJoin", expiry, banEntry.getReason())));
             } else {
-                banEntry = ess.getServer().getBanList(BanList.Type.IP).getBanEntry(event.getAddress().getHostAddress());
-                if (banEntry != null) {
-                    event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("banIpJoin", banEntry.getReason())));
-                }
+                event.disallow(Result.KICK_BANNED, AdventureUtil.miniToLegacy(tlLiteral("banJoin", banEntry.getReason())));
             }
+
+            return;
+        }
+
+        banEntry = ess.getServer().getBanList(BanList.Type.IP).getBanEntry(event.getAddress().getHostAddress());
+        if (banEntry != null) {
+            event.disallow(Result.KICK_BANNED, AdventureUtil.miniToLegacy(tlLiteral("banIpJoin", banEntry.getReason())));
         }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
-    public void onPlayerLogin(final PlayerLoginEvent event) {
-        if (event.getResult() == Result.KICK_FULL) {
-            final User kfuser = ess.getUser(event.getPlayer());
-            kfuser.update(event.getPlayer());
+    public void onPlayerLogin(final AsyncPlayerPreLoginEvent event) {
+        if (event.getLoginResult() == Result.KICK_FULL) {
+            final User kfuser = ess.getUser(event.getUniqueId());
             if (kfuser.isAuthorized("essentials.joinfullserver")) {
                 event.allow();
                 return;
             }
+
             if (ess.getSettings().isCustomServerFullMessage()) {
-                event.disallow(Result.KICK_FULL, tlLiteral("serverFull"));
+                event.disallow(Result.KICK_FULL, AdventureUtil.miniToLegacy(tlLiteral("serverFull")));
             }
         }
     }
