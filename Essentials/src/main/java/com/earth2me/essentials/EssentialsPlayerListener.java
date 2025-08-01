@@ -545,8 +545,13 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
             return;
         }
 
-        final BanList<?> nameBanList = ess.getServer().getBanList(BanList.Type.NAME);
-        BanEntry<?> banEntry = nameBanList.isBanned(event.getName()) ? nameBanList.getBanEntry(event.getName()) : null;
+        BanEntry<?> banEntry;
+        try {
+            banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getName());
+        } catch (Exception e) {
+            return;
+        }
+
         if (banEntry != null) {
             final Date banExpiry = banEntry.getExpiration();
             if (banExpiry != null) {
