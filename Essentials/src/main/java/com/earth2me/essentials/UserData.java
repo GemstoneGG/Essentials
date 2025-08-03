@@ -269,6 +269,10 @@ public abstract class UserData extends PlayerExtension implements IConf {
         return !holder.powertools().isEmpty();
     }
 
+    public Map<String, List<String>> getAllPowertools() {
+        return holder.powertools();
+    }
+
     public Location getLastLocation() {
         final LazyLocation lastLocation = holder.lastLocation();
         return lastLocation != null ? lastLocation.location() : null;

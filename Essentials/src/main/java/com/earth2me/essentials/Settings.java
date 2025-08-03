@@ -156,6 +156,7 @@ public class Settings implements net.ess3.api.ISettings {
     private Tag secondaryColor = DEFAULT_SECONDARY_COLOR;
     private Set<String> multiplierPerms;
     private BigDecimal defaultMultiplier;
+    private Set<String> afkTimeoutCommands = new HashSet<>();
 
     public Settings(final IEssentials ess) {
         this.ess = ess;
@@ -951,6 +952,7 @@ public class Settings implements net.ess3.api.ISettings {
         secondaryColor = _getSecondaryColor();
         multiplierPerms = _getMultiplierPerms();
         defaultMultiplier = _getDefaultMultiplier();
+        afkTimeoutCommands = _getAfkTimeoutCommands();
 
         reloadCount.incrementAndGet();
     }
@@ -1275,8 +1277,21 @@ public class Settings implements net.ess3.api.ISettings {
     }
 
     @Override
-    public long getAutoAfkKick() {
-        return config.getLong("auto-afk-kick", -1);
+    public long getAutoAfkTimeout() {
+        return config.getLong("auto-afk-timeout", config.getLong("auto-afk-kick", -1));
+    }
+
+    private Set<String> _getAfkTimeoutCommands() {
+        final Set<String> timeoutCommands = new HashSet<>();
+        for (final String cmd : config.getList("afk-timeout-commands", String.class)) {
+            timeoutCommands.add(cmd.toLowerCase(Locale.ENGLISH));
+        }
+        return timeoutCommands;
+    }
+
+    @Override
+    public Set<String> getAfkTimeoutCommands() {
+        return afkTimeoutCommands;
     }
 
     @Override
