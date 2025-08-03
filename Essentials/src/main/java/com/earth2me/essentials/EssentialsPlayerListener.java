@@ -14,6 +14,8 @@ import com.earth2me.essentials.utils.LocationUtil;
 import com.earth2me.essentials.utils.MaterialUtil;
 import com.earth2me.essentials.utils.VersionUtil;
 import io.papermc.lib.PaperLib;
+import io.papermc.paper.ban.BanListType;
+import io.papermc.paper.event.player.PlayerServerFullCheckEvent;
 import net.ess3.api.IEssentials;
 import net.ess3.api.events.AfkStatusChangeEvent;
 import net.ess3.provider.CommandSendListenerProvider;
@@ -45,6 +47,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -53,7 +56,6 @@ import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -157,6 +159,12 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
             ess.getServer().getPluginManager().registerEvents(new PaperCommandSendListenerProvider(new CommandSendFilter()), ess);
         } else if (isCommandSendEvent()) {
             ess.getServer().getPluginManager().registerEvents(new BukkitCommandSendListenerProvider(new CommandSendFilter()), ess);
+        }
+
+        if (VersionUtil.isPaper() && VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_21_8_R01)) {
+            ess.getServer().getPluginManager().registerEvents(new LoginListener1_21(), ess);
+        } else {
+            ess.getServer().getPluginManager().registerEvents(new LoginListenerPre1_21(), ess);
         }
     }
 
@@ -540,38 +548,76 @@ public class EssentialsPlayerListener implements Listener, FakeAccessor {
         user.getBase().setCompassTarget(loc);
     }
 
-    @EventHandler(priority = EventPriority.LOW)
-    public void onPlayerLoginBanned(final PlayerLoginEvent event) {
-        if (event.getResult() == Result.KICK_BANNED) {
-            BanEntry banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getPlayer().getName());
-            if (banEntry != null) {
-                final Date banExpiry = banEntry.getExpiration();
-                if (banExpiry != null) {
-                    final String expiry = DateUtil.formatDateDiff(banExpiry.getTime());
-                    event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("tempbanJoin", expiry, banEntry.getReason())));
-                } else {
-                    event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("banJoin", banEntry.getReason())));
-                }
-            } else {
-                banEntry = ess.getServer().getBanList(BanList.Type.IP).getBanEntry(event.getAddress().getHostAddress());
+    private final class LoginListenerPre1_21 implements Listener {
+        @EventHandler(priority = EventPriority.LOW)
+        public void onPlayerLoginBanned(final PlayerLoginEvent event) {
+            if (event.getResult() == PlayerLoginEvent.Result.KICK_BANNED) {
+                BanEntry banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getPlayer().getName());
                 if (banEntry != null) {
-                    event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("banIpJoin", banEntry.getReason())));
+                    final Date banExpiry = banEntry.getExpiration();
+                    if (banExpiry != null) {
+                        final String expiry = DateUtil.formatDateDiff(banExpiry.getTime());
+                        event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("tempbanJoin", expiry, banEntry.getReason())));
+                    } else {
+                        event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("banJoin", banEntry.getReason())));
+                    }
+                } else {
+                    banEntry = ess.getServer().getBanList(BanList.Type.IP).getBanEntry(event.getAddress().getHostAddress());
+                    if (banEntry != null) {
+                        event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("banIpJoin", banEntry.getReason())));
+                    }
+                }
+            }
+        }
+
+        @EventHandler(priority = EventPriority.HIGH)
+        public void onPlayerLogin(final PlayerLoginEvent event) {
+            if (event.getResult() == PlayerLoginEvent.Result.KICK_FULL) {
+                final User kfuser = ess.getUser(event.getPlayer());
+                kfuser.update(event.getPlayer());
+                if (kfuser.isAuthorized("essentials.joinfullserver")) {
+                    event.allow();
+                    return;
+                }
+                if (ess.getSettings().isCustomServerFullMessage()) {
+                    event.disallow(PlayerLoginEvent.Result.KICK_FULL, tlLiteral("serverFull"));
                 }
             }
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
-    public void onPlayerLogin(final PlayerLoginEvent event) {
-        if (event.getResult() == Result.KICK_FULL) {
-            final User kfuser = ess.getUser(event.getPlayer());
-            kfuser.update(event.getPlayer());
-            if (kfuser.isAuthorized("essentials.joinfullserver")) {
-                event.allow();
+    private final class LoginListener1_21 implements Listener {
+        @EventHandler(priority = EventPriority.HIGH)
+        public void onPlayerListFull(final PlayerServerFullCheckEvent event) {
+            final User user = ess.getUser(event.getPlayerProfile().getId());
+            if (user.isAuthorized("essentials.joinfullserver")) {
+                event.allow(true);
                 return;
             }
+
             if (ess.getSettings().isCustomServerFullMessage()) {
-                event.disallow(Result.KICK_FULL, tlLiteral("serverFull"));
+                event.deny(user.tlComponent("serverFull"));
+            }
+        }
+
+        @EventHandler(priority = EventPriority.LOW)
+        public void onPlayerKickBanned(final AsyncPlayerPreLoginEvent event) {
+            if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.KICK_BANNED) {
+                BanEntry<?> banEntry = ess.getServer().getBanList(BanListType.PROFILE).getBanEntry(event.getPlayerProfile());
+                if (banEntry != null) {
+                    final Date banExpiry = banEntry.getExpiration();
+                    if (banExpiry != null) {
+                        final String expiry = DateUtil.formatDateDiff(banExpiry.getTime());
+                        event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("tempbanJoin", expiry, banEntry.getReason())));
+                    } else {
+                        event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("banJoin", banEntry.getReason())));
+                    }
+                } else {
+                    banEntry = ess.getServer().getBanList(BanListType.IP).getBanEntry(event.getAddress());
+                    if (banEntry != null) {
+                        event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("banIpJoin", banEntry.getReason())));
+                    }
+                }
             }
         }
     }
