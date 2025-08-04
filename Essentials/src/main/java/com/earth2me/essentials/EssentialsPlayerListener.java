@@ -1,6 +1,5 @@
 package com.earth2me.essentials;
 
-import com.destroystokyo.paper.profile.ProfileProperty;
 import com.earth2me.essentials.commands.Commandfireball;
 import com.earth2me.essentials.craftbukkit.Inventories;
 import com.earth2me.essentials.textreader.IText;
@@ -27,6 +26,7 @@ import net.ess3.provider.KnownCommandsProvider;
 import net.ess3.provider.TickCountProvider;
 import net.ess3.provider.providers.BukkitCommandSendListenerProvider;
 import net.ess3.provider.providers.PaperCommandSendListenerProvider;
+import net.essentialsx.PaperAdventureSmuggler;
 import net.essentialsx.api.v2.events.AsyncUserDataLoadEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.BanEntry;
@@ -353,11 +353,6 @@ public class EssentialsPlayerListener implements Listener {
             dUser.checkMuteTimeout(currentTime);
             dUser.updateActivity(false, AfkStatusChangeEvent.Cause.JOIN);
             dUser.stopTransaction();
-
-            System.out.println("EssentialsPlayerListener.onPlayerConfigure: " + event.getConnection().getProfile().getName() + " has joined the server.");
-            for (final ProfileProperty property : event.getConnection().getProfile().getProperties()) {
-                System.out.println(property.getName() + " " + property.getValue());
-            }
         }
 
         @EventHandler(priority = EventPriority.HIGHEST)
@@ -636,7 +631,7 @@ public class EssentialsPlayerListener implements Listener {
             }
 
             if (ess.getSettings().isCustomServerFullMessage()) {
-                event.deny(user.tlComponent("serverFull"));
+                PaperAdventureSmuggler.smugglePlayerServerFullCheckEvent(event, AdventureUtil.miniToLegacy(tlLiteral("serverFull")));
             }
         }
 
