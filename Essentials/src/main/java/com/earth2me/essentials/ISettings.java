@@ -321,6 +321,8 @@ public interface ISettings extends IConf {
 
     boolean isCustomServerFullMessage();
 
+    boolean isCustomWhitelistMessage();
+
     boolean isNotifyNoNewMail();
 
     boolean isDropItemsIfFull();

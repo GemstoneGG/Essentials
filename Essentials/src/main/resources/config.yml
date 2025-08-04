@@ -597,6 +597,10 @@ custom-new-username-message: "none"
 # Set to false to keep the vanilla message.
 use-custom-server-full-message: true
 
+# Should Essentials override the vanilla "You are not whitelisted on this server" message with its own from the language file?
+# Set to false to keep the vanilla message.
+use-custom-whitelist-message: true
+
 # You can disable join and quit messages when the player count reaches a certain limit.
 # When the player count is below this number, join/quit messages will always be shown.
 # Set this to -1 to always show join and quit messages regardless of player count.
