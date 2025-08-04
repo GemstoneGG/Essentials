@@ -1,5 +1,6 @@
 package com.earth2me.essentials;
 
+import com.destroystokyo.paper.ClientOption;
 import com.earth2me.essentials.commands.Commandfireball;
 import com.earth2me.essentials.craftbukkit.Inventories;
 import com.earth2me.essentials.textreader.IText;
@@ -353,6 +354,10 @@ public class EssentialsPlayerListener implements Listener {
             dUser.checkMuteTimeout(currentTime);
             dUser.updateActivity(false, AfkStatusChangeEvent.Cause.JOIN);
             dUser.stopTransaction();
+
+            // Set the locale for player to preload the language bundle.
+            final String locale = event.getConnection().getClientOption(ClientOption.LOCALE);
+            dUser.getPlayerLocale(locale);
         }
 
         @EventHandler(priority = EventPriority.HIGHEST)
