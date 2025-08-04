@@ -658,17 +658,14 @@ public class EssentialsPlayerListener implements Listener {
                         event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("banIpJoin", banEntry.getReason())));
                     }
                 }
-            }
-        }
-        if (event.getResult() == Result.KICK_WHITELIST) {
-            final User kfuser = ess.getUser(event.getPlayer());
-            kfuser.update(event.getPlayer());
-            if (kfuser.isAuthorized("essentials.whitelist.bypass")) {
-                event.allow();
-                return;
-            }
-            if (ess.getSettings().isCustomWhitelistMessage()) {
-                event.disallow(Result.KICK_WHITELIST, tlLiteral("whitelistKick"));
+            } else if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST) {
+                if (ess.getPermissionsHandler().isOfflinePermissionSet(event.getUniqueId(), "essentials.whitelist.bypass")) {
+                    event.allow();
+                    return;
+                }
+                if (ess.getSettings().isCustomWhitelistMessage()) {
+                    event.setKickMessage(AdventureUtil.miniToLegacy(tlLiteral("whitelistKick")));
+                }
             }
         }
     }
