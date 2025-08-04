@@ -208,7 +208,9 @@ public interface ISettings extends IConf {
 
     long getAutoAfk();
 
-    long getAutoAfkKick();
+    long getAutoAfkTimeout();
+
+    Set<String> getAfkTimeoutCommands();
 
     boolean getFreezeAfkPlayers();
 
@@ -315,6 +317,8 @@ public interface ISettings extends IConf {
     boolean isCustomNewUsernameMessage();
 
     boolean isCustomServerFullMessage();
+
+    boolean isCustomWhitelistMessage();
 
     boolean isNotifyNoNewMail();
 

@@ -660,6 +660,17 @@ public class EssentialsPlayerListener implements Listener {
                 }
             }
         }
+        if (event.getResult() == Result.KICK_WHITELIST) {
+            final User kfuser = ess.getUser(event.getPlayer());
+            kfuser.update(event.getPlayer());
+            if (kfuser.isAuthorized("essentials.whitelist.bypass")) {
+                event.allow();
+                return;
+            }
+            if (ess.getSettings().isCustomWhitelistMessage()) {
+                event.disallow(Result.KICK_WHITELIST, tlLiteral("whitelistKick"));
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
