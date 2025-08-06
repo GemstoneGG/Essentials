@@ -2,18 +2,19 @@ package com.earth2me.essentials.perm.impl;
 
 import com.earth2me.essentials.Essentials;
 import com.earth2me.essentials.User;
-
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.context.ContextCalculator;
 import net.luckperms.api.context.ContextConsumer;
 import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.context.ImmutableContextSet;
+import net.luckperms.api.query.QueryOptions;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -37,6 +38,17 @@ public class LuckPermsHandler extends ModernVaultHandler {
             this.luckPerms.getContextManager().unregisterCalculator(this.calculator);
             this.calculator = null;
         }
+    }
+
+    @Override
+    public boolean isOfflinePermissionSet(UUID uuid, String node) {
+        final net.luckperms.api.model.user.User user = this.luckPerms.getUserManager().loadUser(uuid).join();
+        if (user == null) {
+            return false;
+        }
+
+        final QueryOptions options = luckPerms.getContextManager().getStaticQueryOptions();
+        return user.getCachedData().getPermissionData(options).checkPermission(node).asBoolean();
     }
 
     @Override
