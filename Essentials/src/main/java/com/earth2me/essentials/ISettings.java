@@ -187,6 +187,8 @@ public interface ISettings extends IConf {
 
     boolean isEcoLogEnabled();
 
+    boolean isEcoLogUUIDEnabled();
+
     boolean isEcoLogUpdateEnabled();
 
     boolean realNamesOnList();
