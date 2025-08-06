@@ -350,6 +350,10 @@ public class EssentialsPlayerListener implements Listener {
             ess.getBackup().onPlayerJoin();
             final User dUser = ess.getUser(event.getConnection().getProfile().getId());
 
+            if (dUser == null) {
+                return;
+            }
+
             dUser.startTransaction();
             if (dUser.isNPC()) {
                 dUser.setNPC(false);
@@ -613,11 +617,14 @@ public class EssentialsPlayerListener implements Listener {
         public void onPlayerLogin(final PlayerLoginEvent event) {
             if (event.getResult() == PlayerLoginEvent.Result.KICK_FULL) {
                 final User kfuser = ess.getUser(event.getPlayer());
-                kfuser.update(event.getPlayer());
-                if (kfuser.isAuthorized("essentials.joinfullserver")) {
-                    event.allow();
-                    return;
+                if (kfuser != null) {
+                    kfuser.update(event.getPlayer());
+                    if (kfuser.isAuthorized("essentials.joinfullserver")) {
+                        event.allow();
+                        return;
+                    }
                 }
+
                 if (ess.getSettings().isCustomServerFullMessage()) {
                     event.disallow(PlayerLoginEvent.Result.KICK_FULL, tlLiteral("serverFull"));
                 }
@@ -629,7 +636,7 @@ public class EssentialsPlayerListener implements Listener {
         @EventHandler(priority = EventPriority.HIGH)
         public void onPlayerListFull(final PlayerServerFullCheckEvent event) {
             final User user = ess.getUser(event.getPlayerProfile().getId());
-            if (user.isAuthorized("essentials.joinfullserver")) {
+            if (user != null && user.isAuthorized("essentials.joinfullserver")) {
                 event.allow(true);
                 return;
             }
