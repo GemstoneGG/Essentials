@@ -23,6 +23,7 @@ import com.earth2me.essentials.commands.NoChargeException;
 import com.earth2me.essentials.commands.NotEnoughArgumentsException;
 import com.earth2me.essentials.commands.PlayerNotFoundException;
 import com.earth2me.essentials.commands.QuietAbortException;
+import com.earth2me.essentials.config.EssentialsConfiguration;
 import com.earth2me.essentials.economy.EconomyLayers;
 import com.earth2me.essentials.economy.vault.VaultEconomyProvider;
 import com.earth2me.essentials.items.AbstractItemDb;
@@ -579,6 +580,8 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
         AdventureUtil.setEss(null);
         Trade.closeLog();
         getUsers().shutdown();
+
+        EssentialsConfiguration.shutdownExecutor();
 
         HandlerList.unregisterAll(this);
     }
