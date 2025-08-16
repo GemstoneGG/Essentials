@@ -74,7 +74,7 @@ public class LuckPermsHandler extends ModernVaultHandler {
     }
 
     // By combining all calculators into one, we only need to make one call to ess.getUser().
-    private class CombinedCalculator implements ContextCalculator<Player> {
+    private final class CombinedCalculator implements ContextCalculator<Player> {
         private final Set<Calculator> calculators = new HashSet<>();
 
         @Override
