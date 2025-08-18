@@ -359,6 +359,8 @@ public interface ISettings extends IConf {
 
     boolean isWorldChangePreserveFlying();
 
+    boolean isGamemodeChangePreserveFlying();
+
     boolean isWorldChangeSpeedResetEnabled();
 
     long getCommandCooldownMs(String label);
