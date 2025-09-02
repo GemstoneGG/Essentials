@@ -75,7 +75,6 @@ import org.bukkit.inventory.PlayerInventory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -327,14 +326,18 @@ public class EssentialsPlayerListener implements Listener {
             ess.provider(InventoryViewProvider.class).getTopInventory(user.getBase().getOpenInventory()).clear();
         }
 
-        final ArrayList<HumanEntity> viewers = new ArrayList<>(user.getBase().getInventory().getViewers());
-        for (final HumanEntity viewer : viewers) {
-            if (viewer instanceof Player) {
-                final User uviewer = ess.getUser((Player) viewer);
-                if (uviewer.isInvSee()) {
-                    uviewer.getBase().closeInventory();
+        final Player quitting = user.getBase();
+        final InventoryViewProvider provider = ess.provider(InventoryViewProvider.class);
+        for (final User uviewer : ess.getOnlineUsers()) {
+            if (!uviewer.isInvSee()) continue;
+            final Player vp = uviewer.getBase();
+            ess.scheduleEntityDelayedTask(vp, () -> {
+                final Inventory top = provider.getTopInventory(vp.getOpenInventory());
+                final InventoryHolder holder = top == null ? null : top.getHolder();
+                if (holder instanceof HumanEntity && ((HumanEntity) holder).getUniqueId().equals(quitting.getUniqueId())) {
+                    vp.closeInventory();
                 }
-            }
+            });
         }
 
         user.updateActivity(false, AfkStatusChangeEvent.Cause.QUIT);
