@@ -957,6 +957,10 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
         final User user;
         Player exPlayer;
 
+        if (sourceUser != null && (searchTerm.equals("@p") || searchTerm.equals("@s"))) {
+            return sourceUser;
+        }
+
         try {
             exPlayer = server.getPlayer(UUID.fromString(searchTerm));
         } catch (final IllegalArgumentException ex) {
