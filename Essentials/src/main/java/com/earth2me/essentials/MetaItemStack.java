@@ -18,11 +18,13 @@ import org.bukkit.DyeColor;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.block.Banner;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.BookMeta;
@@ -33,6 +35,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.inventory.meta.trim.ArmorTrim;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
+import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -350,6 +355,15 @@ public class MetaItemStack {
             } else {
                 throw new TranslatableException("leatherSyntax");
             }
+        } else if (MaterialUtil.isArmor(stack.getType()) && split.length > 1 && split[0].equalsIgnoreCase("trim")) {
+            final ArmorMeta armorMeta = (ArmorMeta) stack.getItemMeta();
+            final String[] trimData = split[1].split("\\|");
+            final TrimPattern pattern = Registry.TRIM_PATTERN.getOrThrow(NamespacedKey.minecraft(trimData[0].toLowerCase()));
+            final TrimMaterial material = Registry.TRIM_MATERIAL.getOrThrow(NamespacedKey.minecraft(trimData[1].toLowerCase()));
+
+            armorMeta.setTrim(new ArmorTrim(material, pattern));
+
+            stack.setItemMeta(armorMeta);
         } else {
             parseEnchantmentStrings(sender, allowUnsafe, split, ess);
         }

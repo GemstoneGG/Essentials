@@ -7,14 +7,15 @@ import net.luckperms.api.context.ContextCalculator;
 import net.luckperms.api.context.ContextConsumer;
 import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.context.ImmutableContextSet;
-import net.luckperms.api.query.QueryOptions;
+import net.luckperms.api.model.group.Group;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -41,14 +42,20 @@ public class LuckPermsHandler extends ModernVaultHandler {
     }
 
     @Override
-    public boolean isOfflinePermissionSet(UUID uuid, String node) {
-        final net.luckperms.api.model.user.User user = this.luckPerms.getUserManager().loadUser(uuid).join();
-        if (user == null) {
-            return false;
+    public List<String> getGroups() {
+        final List<String> groups = new ArrayList<>();
+        for (final Group group : luckPerms.getGroupManager().getLoadedGroups()) {
+            groups.add(group.getName());
         }
 
-        final QueryOptions options = luckPerms.getContextManager().getStaticQueryOptions();
-        return user.getCachedData().getPermissionData(options).checkPermission(node).asBoolean();
+        // Also add the vault group names for backwards compatibility
+        for (final String group : super.getGroups()) {
+            if (!groups.contains(group)) {
+                groups.add(group);
+            }
+        }
+
+        return groups;
     }
 
     @Override
