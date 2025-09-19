@@ -33,6 +33,7 @@ import net.essentialsx.api.v2.events.AsyncUserDataLoadEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.BanEntry;
 import org.bukkit.BanList;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -62,7 +63,6 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -82,6 +82,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -92,9 +93,10 @@ import java.util.regex.Pattern;
 
 import static com.earth2me.essentials.I18n.tlLiteral;
 
-public class EssentialsPlayerListener implements Listener {
+public class EssentialsPlayerListener implements Listener, Runnable {
     private final transient IEssentials ess;
     private final ConcurrentHashMap<UUID, Integer> pendingMotdTasks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Location> lastPlayerLocations = new ConcurrentHashMap<>();
 
     public EssentialsPlayerListener(final IEssentials parent) {
         this.ess = parent;
@@ -231,70 +233,73 @@ public class EssentialsPlayerListener implements Listener {
         user.setDisplayNick();
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onPlayerMove(final PlayerMoveEvent event) {
-        if (event.getFrom().getBlockX() == event.getTo().getBlockX() && event.getFrom().getBlockZ() == event.getTo().getBlockZ() && event.getFrom().getBlockY() == event.getTo().getBlockY()) {
-            return;
-        }
+    @Override
+    public void run() {
+        Bukkit.getOnlinePlayers().forEach(player -> {
+            final User user = ess.getUser(player);
 
-        final User user = ess.getUser(event.getPlayer());
-
-        if (user.isFreeze()) {
-            final Location from = event.getFrom();
-            final Location to = event.getTo().clone();
-            to.setX(from.getX());
-            to.setY(from.getY());
-            to.setZ(from.getZ());
-            try {
-                event.setTo(LocationUtil.getSafeDestination(ess, to));
-            } catch (final Exception ex) {
-                event.setTo(to);
-            }
-            return;
-        }
-
-        if (!ess.getSettings().cancelAfkOnMove() && !ess.getSettings().getFreezeAfkPlayers()) {
-            return;
-        }
-
-        if (user.isAfk() && ess.getSettings().getFreezeAfkPlayers()) {
-            final Location from = event.getFrom();
-            final Location origTo = event.getTo();
-            final Location to = origTo.clone();
-            if (origTo.getY() >= from.getBlockY() + 1) {
-                user.updateActivityOnMove(true);
-                return;
-            }
-            to.setX(from.getX());
-            to.setY(from.getY());
-            to.setZ(from.getZ());
-            try {
-                if (event.getPlayer().getAllowFlight()) {
-                    // Don't teleport to a safe location here, they are either a god or flying
-                    throw new Exception();
+            // Check if the user is frozen and prevent movement
+            if (user.isFreeze()) {
+                final Location from = lastPlayerLocations.getOrDefault(player.getUniqueId(), player.getLocation());
+                final Location to = from.clone(); // Ensure the player stays at the same location
+                try {
+                    // Attempt to send the player to a safe destination if needed
+                    PaperLib.teleportAsync(player, LocationUtil.getSafeDestination(ess, to));
+                } catch (final Exception ex) {
+                    PaperLib.teleportAsync(player, to); // If the safe destination fails, teleport them back to the original location
                 }
-                event.setTo(LocationUtil.getSafeDestination(ess, to));
-            } catch (final Exception ex) {
-                event.setTo(to);
+                return; // Exit early since the player is frozen
             }
-            return;
-        }
-        final Location afk = user.getAfkPosition();
-        if (afk == null || !event.getTo().getWorld().equals(afk.getWorld()) || afk.distanceSquared(event.getTo()) > 9) {
-            user.updateActivityOnMove(true);
-        }
+
+            // Check for AFK players and freeze if necessary
+            if (user.isAfk() && ess.getSettings().getFreezeAfkPlayers()) {
+                final Location from = lastPlayerLocations.getOrDefault(player.getUniqueId(), player.getLocation());
+                final Location to = from.clone(); // Reset to original position
+                try {
+                    // Prevent movement if they are not allowed to move while AFK
+                    if (player.getAllowFlight()) {
+                        throw new Exception(); // Allow movement if flying
+                    }
+                    PaperLib.teleportAsync(player, LocationUtil.getSafeDestination(ess, to));
+                } catch (final Exception ex) {
+                    PaperLib.teleportAsync(player, to); // Ensure they stay at the original location if anything fails
+                }
+                return; // Exit early since the player is AFK and frozen
+            }
+
+            // Regular movement handling and AFK checks
+            final Location from = lastPlayerLocations.getOrDefault(player.getUniqueId(), player.getLocation());
+            final Location to = player.getLocation();
+
+            if (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ()) {
+                // Handle activity based on movement if the player is AFK or not frozen
+                if (!ess.getSettings().cancelAfkOnMove()) {
+                    return;
+                }
+
+                final Location afk = user.getAfkPosition();
+                if (afk == null || !afk.equals(to)) {
+                    user.updateActivityOnMove(true); // Update activity if they move while not AFK
+                }
+            }
+
+            // Update the last location for future checks
+            lastPlayerLocations.put(player.getUniqueId(), to);
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerQuit(final PlayerQuitEvent event) {
         final User user = ess.getUser(event.getPlayer());
 
+        lastPlayerLocations.remove(event.getPlayer().getUniqueId());
+
         final Integer pendingId = pendingMotdTasks.remove(user.getUUID());
         if (pendingId != null) {
             ess.getScheduler().cancelTask(pendingId);
         }
 
-        if (hideJoinQuitMessages() || (ess.getSettings().allowSilentJoinQuit() && user.isAuthorized("essentials.silentquit"))) {
+        if (hideJoinQuitMessages() || ess.getSettings().allowSilentJoinQuit() && user.isAuthorized("essentials.silentquit")) {
             event.setQuitMessage(null);
         } else if (ess.getSettings().isCustomQuitMessage() && event.getQuitMessage() != null) {
             final Player player = event.getPlayer();
@@ -596,7 +601,7 @@ public class EssentialsPlayerListener implements Listener {
         @EventHandler(priority = EventPriority.LOW)
         public void onPlayerLoginBanned(final PlayerLoginEvent event) {
             if (event.getResult() == PlayerLoginEvent.Result.KICK_BANNED) {
-                BanEntry banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getPlayer().getName());
+                BanEntry<?> banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getPlayer().getName());
                 if (banEntry != null) {
                     final Date banExpiry = banEntry.getExpiration();
                     if (banExpiry != null) {
@@ -753,7 +758,7 @@ public class EssentialsPlayerListener implements Listener {
 
         if (ess.getSettings().getSocialSpyCommands().contains(cmd) || ess.getSettings().getSocialSpyCommands().contains("*")) {
             if (pluginCommand == null
-                || (!pluginCommand.getName().equals("msg") && !pluginCommand.getName().equals("r"))) { // /msg and /r are handled in SimpleMessageRecipient
+                || !pluginCommand.getName().equals("msg") && !pluginCommand.getName().equals("r")) { // /msg and /r are handled in SimpleMessageRecipient
                 final User user = ess.getUser(player);
                 if (!user.isAuthorized("essentials.chat.spy.exempt")) {
                     final String playerName = ess.getSettings().isSocialSpyDisplayNames() ? player.getDisplayName() : player.getName();
@@ -893,11 +898,11 @@ public class EssentialsPlayerListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerChangedWorld(final PlayerChangedWorldEvent event) {
         final User user = ess.getUser(event.getPlayer());
-        final String newWorld = event.getPlayer().getLocation().getWorld().getName();
+        final String newWorld = Objects.requireNonNull(event.getPlayer().getLocation().getWorld()).getName();
         user.setDisplayNick();
         updateCompass(user);
         if (ess.getSettings().getNoGodWorlds().contains(newWorld) && user.isGodModeEnabledRaw()) {
-            // Player god mode is never disabled in order to retain it when changing worlds once more.
+            // Player god mode is never disabled to retain it when changing worlds once more.
             // With that said, players will still take damage as per the result of User#isGodModeEnabled()
             user.sendTl("noGodWorldWarning");
         }
@@ -1218,7 +1223,7 @@ public class EssentialsPlayerListener implements Listener {
                     final PluginCommand command = ess.getServer().getPluginCommand(label);
                     if (!checked.contains(command)) {
                         checked.add(command);
-                        if (!user.isAuthorized(command.getName().equals("r") ? "essentials.msg" : "essentials." + command.getName())) {
+                        if (!user.isAuthorized(Objects.requireNonNull(command).getName().equals("r") ? "essentials.msg" : "essentials." + command.getName())) {
                             toRemove.add(command);
                         }
                     }
@@ -1229,17 +1234,17 @@ public class EssentialsPlayerListener implements Listener {
         }
 
         /**
-         * Returns true if all of the following are true:
+         * Returns true if all the following are true:
          * - The command is a plugin command
          * - The plugin command is from an official EssentialsX plugin or addon
-         * - There is no known alternative OR the alternative is overridden by Essentials
+         * - There is no known alternative, OR the alternative is overridden by Essentials
          */
         private boolean isEssentialsCommand(final String label) {
             final PluginCommand command = ess.getServer().getPluginCommand(label);
 
             return command != null
                     && (command.getPlugin() == ess || command.getPlugin().getClass().getName().startsWith("com.earth2me.essentials") || command.getPlugin().getClass().getName().startsWith("net.essentialsx"))
-                    && (ess.getSettings().isCommandOverridden(label) || (ess.getAlternativeCommandsHandler().getAlternative(label) == null));
+                    && (ess.getSettings().isCommandOverridden(label) || ess.getAlternativeCommandsHandler().getAlternative(label) == null);
         }
     }
 }
