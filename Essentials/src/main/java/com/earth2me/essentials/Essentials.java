@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.earth2me.essentials;
 
 import com.earth2me.essentials.commands.EssentialsCommand;
@@ -170,6 +171,7 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
     private transient CustomItemResolver customItemResolver;
     private transient PermissionsHandler permissionsHandler;
     private transient AlternativeCommandsHandler alternativeCommandsHandler;
+    private transient EssentialsPlayerListener playerListener;
     @Deprecated
     private transient UserMap legacyUserMap;
     private transient ModernUserMap userMap;
@@ -435,6 +437,8 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
             timer = new EssentialsTimer(this);
             scheduleGlobalRepeatingTask(timer, 1000, 50);
 
+            runTaskTimerAsynchronously(this.playerListener, 1L, 2L);
+
             Economy.setEss(this);
             execTimer.mark("RegHandler");
 
@@ -496,8 +500,8 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
         pm.registerEvents(pluginListener, this);
         confList.add(pluginListener);
 
-        final EssentialsPlayerListener playerListener = new EssentialsPlayerListener(this);
-        playerListener.registerEvents();
+        this.playerListener = new EssentialsPlayerListener(this);
+        this.playerListener.registerEvents();
 
         final EssentialsBlockListener blockListener = new EssentialsBlockListener(this);
         pm.registerEvents(blockListener, this);
@@ -1002,7 +1006,7 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
 
             if (getHidden || canInteractWith(sourceUser, user)) {
                 return user;
-            } else { // not looking for hidden and cannot interact (i.e is hidden)
+            } else { // not looking for hidden and cannot interact (i.e. is hidden)
                 if (getOffline && user.getName().equalsIgnoreCase(searchTerm)) { // if looking for offline and got an exact match
                     return user;
                 }

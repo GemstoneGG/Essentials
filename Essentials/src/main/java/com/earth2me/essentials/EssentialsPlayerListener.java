@@ -34,6 +34,7 @@ import net.essentialsx.api.v2.events.AsyncUserDataLoadEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.BanEntry;
 import org.bukkit.BanList;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -63,7 +64,6 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
@@ -83,6 +83,7 @@ import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -91,9 +92,10 @@ import java.util.regex.Pattern;
 
 import static com.earth2me.essentials.I18n.tlLiteral;
 
-public class EssentialsPlayerListener implements Listener {
+public class EssentialsPlayerListener implements Listener, Runnable {
     private final transient IEssentials ess;
     private final ConcurrentHashMap<UUID, SchedulingProvider.EssentialsTask> pendingMotdTasks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Location> lastPlayerLocations = new ConcurrentHashMap<>();
 
     public EssentialsPlayerListener(final IEssentials parent) {
         this.ess = parent;
@@ -235,63 +237,60 @@ public class EssentialsPlayerListener implements Listener {
         user.setDisplayNick();
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onPlayerMove(final PlayerMoveEvent event) {
-        if (event.getFrom().getBlockX() == event.getTo().getBlockX() && event.getFrom().getBlockZ() == event.getTo().getBlockZ() && event.getFrom().getBlockY() == event.getTo().getBlockY()) {
-            return;
-        }
+    @Override
+    public void run() {
+        Bukkit.getOnlinePlayers().forEach(player -> {
+            final User user = ess.getUser(player);
 
-        final User user = ess.getUser(event.getPlayer());
-
-        if (user.isFreeze()) {
-            final Location from = event.getFrom();
-            final Location to = event.getTo().clone();
-            to.setX(from.getX());
-            to.setY(from.getY());
-            to.setZ(from.getZ());
-            try {
-                event.setTo(LocationUtil.getSafeDestination(ess, to));
-            } catch (final Exception ex) {
-                event.setTo(to);
-            }
-            return;
-        }
-
-        if (!ess.getSettings().cancelAfkOnMove() && !ess.getSettings().getFreezeAfkPlayers()) {
-            return;
-        }
-
-        if (user.isAfk() && ess.getSettings().getFreezeAfkPlayers()) {
-            final Location from = event.getFrom();
-            final Location origTo = event.getTo();
-            final Location to = origTo.clone();
-            if (origTo.getY() >= from.getBlockY() + 1) {
-                user.updateActivityOnMove(true);
+            if (user.isFreeze()) {
+                final Location from = lastPlayerLocations.getOrDefault(player.getUniqueId(), player.getLocation());
+                final Location to = from.clone();
+                try {
+                    user.getAsyncTeleport().now(to, false, TeleportCause.PLUGIN, new CompletableFuture<>());
+                } catch (final Exception ex) {
+                    user.getAsyncTeleport().nowUnsafe(to, TeleportCause.PLUGIN, new CompletableFuture<>());
+                }
                 return;
             }
-            to.setX(from.getX());
-            to.setY(from.getY());
-            to.setZ(from.getZ());
-            try {
-                if (event.getPlayer().getAllowFlight()) {
+
+            if (user.isAfk() && ess.getSettings().getFreezeAfkPlayers()) {
+                final Location from = lastPlayerLocations.getOrDefault(player.getUniqueId(), player.getLocation());
+                final Location to = from.clone();
+                try {
                     // Don't teleport to a safe location here, they are either a god or flying
-                    throw new Exception();
+                    if (player.getAllowFlight()) {
+                        throw new Exception();
+                    }
+                    user.getAsyncTeleport().now(to, false, TeleportCause.PLUGIN, new java.util.concurrent.CompletableFuture<>());
+                } catch (final Exception ex) {
+                    user.getAsyncTeleport().nowUnsafe(to, TeleportCause.PLUGIN, new java.util.concurrent.CompletableFuture<>());
                 }
-                event.setTo(LocationUtil.getSafeDestination(ess, to));
-            } catch (final Exception ex) {
-                event.setTo(to);
+                return;
             }
-            return;
-        }
-        final Location afk = user.getAfkPosition();
-        if (afk == null || !event.getTo().getWorld().equals(afk.getWorld()) || afk.distanceSquared(event.getTo()) > 9) {
-            user.updateActivityOnMove(true);
-        }
+
+            final Location from = lastPlayerLocations.getOrDefault(player.getUniqueId(), player.getLocation());
+            final Location to = player.getLocation();
+
+            if (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ()) {
+                if (!ess.getSettings().cancelAfkOnMove()) {
+                    return;
+                }
+
+                final Location afk = user.getAfkPosition();
+                if (afk == null || !afk.equals(to)) {
+                    user.updateActivityOnMove(true);
+                }
+            }
+
+            lastPlayerLocations.put(player.getUniqueId(), to);
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerQuit(final PlayerQuitEvent event) {
         final User user = ess.getUser(event.getPlayer());
+
+        lastPlayerLocations.remove(event.getPlayer().getUniqueId());
 
         final SchedulingProvider.EssentialsTask pendingTask = pendingMotdTasks.remove(user.getUUID());
         if (pendingTask != null) {
@@ -602,7 +601,7 @@ public class EssentialsPlayerListener implements Listener {
         @EventHandler(priority = EventPriority.LOW)
         public void onPlayerLoginBanned(final PlayerLoginEvent event) {
             if (event.getResult() == PlayerLoginEvent.Result.KICK_BANNED) {
-                BanEntry banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getPlayer().getName());
+                BanEntry<?> banEntry = ess.getServer().getBanList(BanList.Type.NAME).getBanEntry(event.getPlayer().getName());
                 if (banEntry != null) {
                     final Date banExpiry = banEntry.getExpiration();
                     if (banExpiry != null) {
