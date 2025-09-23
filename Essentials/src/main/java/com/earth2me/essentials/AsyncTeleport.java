@@ -217,7 +217,7 @@ public class AsyncTeleport implements IAsyncTeleport {
 
     @Override
     public void teleport(final Player entity, final Trade chargeFor, final TeleportCause cause, final CompletableFuture<Boolean> future) {
-        teleportOwner.sendTl("teleportToPlayer", entity.displayName());
+        teleportOwner.sendTl("teleportToPlayer", entity.getDisplayName());
         teleport(teleportOwner, new PlayerTarget(entity), chargeFor, cause, future);
     }
 
