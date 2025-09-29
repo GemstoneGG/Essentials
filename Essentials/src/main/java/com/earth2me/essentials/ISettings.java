@@ -449,6 +449,8 @@ public interface ISettings extends IConf {
 
     long getBaltopMinPlaytime();
 
+    int getBaltopEntryLimit();
+
     enum KeepInvPolicy {
         KEEP,
         DELETE,
