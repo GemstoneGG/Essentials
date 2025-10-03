@@ -47,7 +47,6 @@ import com.earth2me.essentials.utils.FormatUtil;
 import com.earth2me.essentials.utils.VersionUtil;
 import io.papermc.lib.PaperLib;
 import net.ess3.api.Economy;
-import com.earth2me.essentials.config.EssentialsConfiguration;
 import net.ess3.api.IEssentials;
 import net.ess3.api.IItemDb;
 import net.ess3.api.IJails;
