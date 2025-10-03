@@ -461,7 +461,10 @@ public class EssentialsPlayerListener implements Listener, Runnable {
             effectiveMessage = message;
         }
 
-        joinMessageConsumer.accept(effectiveMessage);
+        // Only change the vanilla join message if it's different to avoid nuking client translation
+        if (effectiveMessage != null && !effectiveMessage.equals(message) || message != null && effectiveMessage == null) {
+            joinMessageConsumer.accept(effectiveMessage);
+        }
 
         ess.runTaskAsynchronously(() -> ess.getServer().getPluginManager().callEvent(new AsyncUserDataLoadEvent(user, effectiveMessage)));
 
