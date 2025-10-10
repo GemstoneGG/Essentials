@@ -262,9 +262,9 @@ public class EssentialsPlayerListener implements Listener, Runnable {
                     if (player.getAllowFlight()) {
                         throw new Exception();
                     }
-                    user.getAsyncTeleport().now(to, false, TeleportCause.PLUGIN, new java.util.concurrent.CompletableFuture<>());
+                    user.getAsyncTeleport().now(to, false, TeleportCause.PLUGIN, new CompletableFuture<>());
                 } catch (final Exception ex) {
-                    user.getAsyncTeleport().nowUnsafe(to, TeleportCause.PLUGIN, new java.util.concurrent.CompletableFuture<>());
+                    user.getAsyncTeleport().nowUnsafe(to, TeleportCause.PLUGIN, new CompletableFuture<>());
                 }
                 return;
             }
