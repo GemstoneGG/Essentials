@@ -37,8 +37,8 @@ public class Commandinvsee extends EssentialsCommand {
         } else {
             inv = invUser.getBase().getInventory();
         }
-        user.getBase().closeInventory();
-        user.getBase().openInventory(inv);
+        ess.scheduleEntityDelayedTask(user.getBase(), () -> user.getBase().closeInventory());
+        ess.scheduleEntityDelayedTask(user.getBase(), () -> user.getBase().openInventory(inv));
         user.setInvSee(true);
     }
 
@@ -49,9 +49,6 @@ public class Commandinvsee extends EssentialsCommand {
             suggestions.remove(user.getName());
             return suggestions;
         } else {
-            //if (args.length == 2) {
-            //    return Lists.newArrayList("equipped");
-            //}
             return Collections.emptyList();
         }
     }

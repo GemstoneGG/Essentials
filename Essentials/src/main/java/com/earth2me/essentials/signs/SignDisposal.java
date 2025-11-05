@@ -25,7 +25,8 @@ public class SignDisposal extends EssentialsSign {
         if (title.isEmpty()) {
             title = player.playerTl("disposal");
         }
-        player.getBase().openInventory(ess.getServer().createInventory(player.getBase(), 36, title));
+        final String finalTitle = title;
+        ess.scheduleEntityDelayedTask(player.getBase(), () -> player.getBase().openInventory(ess.getServer().createInventory(player.getBase(), 36, finalTitle)));
         return true;
     }
 }

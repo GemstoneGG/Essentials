@@ -46,7 +46,7 @@ public class SignFree extends EssentialsSign {
         for (int i = 0; i < 36; i++) {
             invent.addItem(item);
         }
-        player.getBase().openInventory(invent);
+        ess.scheduleEntityDelayedTask(player.getBase(), () -> player.getBase().openInventory(invent));
         Trade.log("Sign", "Free", "Interact", username, null, username, new Trade(item, ess), sign.getBlock().getLocation(), player.getMoney(), ess);
         return true;
     }

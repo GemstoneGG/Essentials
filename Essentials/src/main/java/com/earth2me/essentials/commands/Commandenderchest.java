@@ -18,8 +18,9 @@ public class Commandenderchest extends EssentialsCommand {
             target = getPlayer(server, user, args, 0);
         }
 
-        user.getBase().closeInventory();
-        user.getBase().openInventory(target.getBase().getEnderChest());
+        ess.scheduleEntityDelayedTask(target.getBase(), () -> user.getBase().closeInventory());
+        final User finalTarget = target;
+        ess.scheduleEntityDelayedTask(target.getBase(), () -> user.getBase().openInventory(finalTarget.getBase().getEnderChest()));
         user.setEnderSee(!target.equals(user));
     }
 
