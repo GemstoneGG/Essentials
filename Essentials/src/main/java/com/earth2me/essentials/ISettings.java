@@ -417,6 +417,8 @@ public interface ISettings extends IConf {
 
     boolean logCommandBlockCommands();
 
+    boolean logConsoleCommands();
+
     Set<Predicate<String>> getNickBlacklist();
 
     double getMaxProjectileSpeed();
