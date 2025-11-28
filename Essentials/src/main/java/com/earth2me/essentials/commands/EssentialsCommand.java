@@ -42,6 +42,7 @@ public abstract class EssentialsCommand implements IEssentialsCommand {
      */
     protected static final List<String> COMMON_DATE_DIFFS = ImmutableList.of("1m", "15m", "1h", "3h", "12h", "1d", "1w", "1mo", "1y");
     private static final Pattern ARGUMENT_PATTERN = Pattern.compile("([ :>])(([\\[<])[A-Za-z |]+[>\\]])");
+    private static final int MAX_ARGUMENT_LENGTH = 256;
 
     private final transient String name;
     private final transient Map<String, String> usageStrings = new LinkedHashMap<>();
@@ -87,7 +88,16 @@ public abstract class EssentialsCommand implements IEssentialsCommand {
             }
             bldr.append(args[i]);
         }
-        return bldr.toString();
+        final String result = bldr.toString();
+        return result.length() > MAX_ARGUMENT_LENGTH ? result.substring(0, MAX_ARGUMENT_LENGTH) : result;
+    }
+
+    protected static String[] sanitizeArgs(final String[] args) {
+        final String[] sanitized = new String[args.length];
+        for (int i = 0; i < args.length; i++) {
+            sanitized[i] = args[i].length() > MAX_ARGUMENT_LENGTH ? args[i].substring(0, MAX_ARGUMENT_LENGTH) : args[i];
+        }
+        return sanitized;
     }
 
     private boolean canInteractWith(final User interactor, final User interactee) {
@@ -168,7 +178,7 @@ public abstract class EssentialsCommand implements IEssentialsCommand {
     public final void run(final Server server, final User user, final String commandLabel, final Command cmd, final String[] args) throws Exception {
         final Trade charge = new Trade(this.getName(), ess);
         charge.isAffordableFor(user);
-        run(server, user, commandLabel, args);
+        run(server, user, commandLabel, sanitizeArgs(args));
         charge.charge(user);
     }
 
@@ -178,7 +188,7 @@ public abstract class EssentialsCommand implements IEssentialsCommand {
 
     @Override
     public final void run(final Server server, final CommandSource sender, final String commandLabel, final Command cmd, final String[] args) throws Exception {
-        run(server, sender, commandLabel, args);
+        run(server, sender, commandLabel, sanitizeArgs(args));
     }
 
     protected void run(final Server server, final CommandSource sender, final String commandLabel, final String[] args) throws Exception {
