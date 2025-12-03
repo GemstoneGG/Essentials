@@ -171,7 +171,6 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
     private transient CustomItemResolver customItemResolver;
     private transient PermissionsHandler permissionsHandler;
     private transient AlternativeCommandsHandler alternativeCommandsHandler;
-    private transient EssentialsPlayerListener playerListener;
     @Deprecated
     private transient UserMap legacyUserMap;
     private transient ModernUserMap userMap;
@@ -437,8 +436,6 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
             timer = new EssentialsTimer(this);
             scheduleGlobalRepeatingTask(timer, 1000, 50);
 
-            runTaskTimerAsynchronously(this.playerListener, 1L, 2L);
-
             Economy.setEss(this);
             execTimer.mark("RegHandler");
 
@@ -500,8 +497,8 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
         pm.registerEvents(pluginListener, this);
         confList.add(pluginListener);
 
-        this.playerListener = new EssentialsPlayerListener(this);
-        this.playerListener.registerEvents();
+        final EssentialsPlayerListener playerListener = new EssentialsPlayerListener(this);
+        playerListener.registerEvents();
 
         final EssentialsBlockListener blockListener = new EssentialsBlockListener(this);
         pm.registerEvents(blockListener, this);
