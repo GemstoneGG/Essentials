@@ -10,6 +10,7 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,6 +25,7 @@ public class UtilTest {
         MockBukkit.mock();
         Essentials.TESTING = true;
         ess = MockBukkit.load(Essentials.class);
+        ess.getI18n().updateLocale(Locale.ENGLISH.toLanguageTag());
     }
 
     @AfterEach
