@@ -671,7 +671,7 @@ public class EssentialsPlayerListener implements Listener, Runnable {
                 return;
             }
 
-            if (ess.getSettings().isCustomServerFullMessage()) {
+            if (!event.isAllowed() && ess.getSettings().isCustomServerFullMessage()) {
                 PaperAdventureSmuggler.smugglePlayerServerFullCheckEvent(event, AdventureUtil.miniToLegacy(tlLiteral("serverFull")));
             }
         }
