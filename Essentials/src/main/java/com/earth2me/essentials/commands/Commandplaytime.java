@@ -2,7 +2,7 @@ package com.earth2me.essentials.commands;
 
 import com.earth2me.essentials.CommandSource;
 import com.earth2me.essentials.User;
-import com.earth2me.essentials.utils.AdventureUtil;
+import com.earth2me.essentials.adventure.AdventureUtil;
 import com.earth2me.essentials.utils.DateUtil;
 import com.earth2me.essentials.utils.EnumUtil;
 import com.earth2me.essentials.utils.VersionUtil;
@@ -57,7 +57,7 @@ public class Commandplaytime extends EssentialsCommand {
         }
 
         final long playtimeMs = System.currentTimeMillis() - (playtime * 50L);
-        sender.sendTl(key, DateUtil.formatDateDiff(playtimeMs), AdventureUtil.parsed(AdventureUtil.legacyToMini(displayName)));
+        sender.sendTl(key, DateUtil.formatDateDiff(playtimeMs), AdventureUtil.parsed(ess.getAdventureFacet().legacyToMini(displayName)));
     }
 
     @Override
