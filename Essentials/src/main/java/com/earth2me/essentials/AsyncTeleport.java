@@ -172,8 +172,8 @@ public class AsyncTeleport implements IAsyncTeleport {
             targetLoc.setX(LocationUtil.getXInsideWorldBorder(targetLoc.getWorld(), targetLoc.getBlockX()));
             targetLoc.setZ(LocationUtil.getZInsideWorldBorder(targetLoc.getWorld(), targetLoc.getBlockZ()));
         }
-        PaperLib.getChunkAtAsync(targetLoc.getWorld(), targetLoc.getBlockX() >> 4, targetLoc.getBlockZ() >> 4, true, true).thenAccept(chunk ->
-            ess.ensureRegion(targetLoc, () -> {
+        ess.scheduleLocationDelayedTask(targetLoc, () ->
+            PaperLib.getChunkAtAsync(targetLoc.getWorld(), targetLoc.getBlockX() >> 4, targetLoc.getBlockZ() >> 4, true, true).thenAccept(chunk -> {
                 if (LocationUtil.isBlockUnsafeForUser(ess, teleportee, targetLoc.getWorld(), targetLoc.getBlockX(), targetLoc.getBlockY(), targetLoc.getBlockZ())) {
                     if (ess.getSettings().isTeleportSafetyEnabled()) {
                         if (ess.getSettings().isForceDisableTeleportSafety()) {
@@ -204,10 +204,11 @@ public class AsyncTeleport implements IAsyncTeleport {
                     }
                 }
                 future.complete(true);
-            })).exceptionally(th -> {
+            }).exceptionally(th -> {
                 future.completeExceptionally(th);
                 return null;
-            });
+            })
+        );
     }
 
     @Override
