@@ -176,7 +176,7 @@ public final class VersionUtil {
                 }
             }
 
-            if (!supportedVersions.contains(getServerBukkitVersion())) {
+            if (!isSupportedVersion(getServerBukkitVersion())) {
                 return supportStatus = SupportStatus.OUTDATED;
             }
 
@@ -189,8 +189,30 @@ public final class VersionUtil {
         return supportStatusClass;
     }
 
+    /**
+     * Checks if a version is considered supported, either by exact match in the
+     * supported versions set, or by matching the base version (major.minor.patch)
+     * of a supported version. This handles both the new PaperMC versioning scheme
+     * (which omits the Bukkit revision suffix) and development builds that report
+     * versions like {@code 26.1-rc-3.build.8-alpha}.
+     */
+    private static boolean isSupportedVersion(final BukkitVersion version) {
+        if (supportedVersions.contains(version)) {
+            return true;
+        }
+        // Check if this version matches a supported base version.
+        // This covers Paper versions (no -R0.1-SNAPSHOT suffix) and
+        // dev variants (snapshot/pre-release/RC/Paper builds).
+        for (final BukkitVersion supported : supportedVersions) {
+            if (version.equalsBaseVersion(supported)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static final class BukkitVersion implements Comparable<BukkitVersion> {
-        private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)\\.?([0-9]*)?(?:-snapshot-(\\d+))?(?:-pre-?(\\d+))?(?:-rc-?(\\d+))?(?:-?R?([\\d.]+))?(?:-SNAPSHOT)?");
+        private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)\\.?([0-9]*)?(?:-snapshot-(\\d+))?(?:-pre-?(\\d+))?(?:-rc-?(\\d+))?(?:\\.build\\.(\\d+)(?:-([a-z]+))?)?(?:-?R?([\\d.]+))?(?:-SNAPSHOT)?");
         private static final Pattern LEGACY_SNAPSHOT_PATTERN = Pattern.compile("^(\\d{2})w(\\d{2})([a-z])(?:-?R?([\\d.]+))?(?:-SNAPSHOT)?");
 
         private final int major;
@@ -198,6 +220,8 @@ public final class VersionUtil {
         private final int snapshotRelease;
         private final int preRelease;
         private final int releaseCandidate;
+        private final int paperBuild;
+        private final String releaseChannel;
         private final int patch;
         private final double revision;
 
@@ -206,7 +230,7 @@ public final class VersionUtil {
         private final int snapshotWeek;
         private final char snapshotLetter;
 
-        private BukkitVersion(final int major, final int minor, final int patch, final double revision, final int snapshotRelease, final int preRelease, final int releaseCandidate) {
+        private BukkitVersion(final int major, final int minor, final int patch, final double revision, final int snapshotRelease, final int preRelease, final int releaseCandidate, final int paperBuild, final String releaseChannel) {
             this.major = major;
             this.minor = minor;
             this.patch = patch;
@@ -214,13 +238,15 @@ public final class VersionUtil {
             this.snapshotRelease = snapshotRelease;
             this.preRelease = preRelease;
             this.releaseCandidate = releaseCandidate;
+            this.paperBuild = paperBuild;
+            this.releaseChannel = releaseChannel;
             this.snapshot = false;
             this.snapshotYear = -1;
             this.snapshotWeek = -1;
             this.snapshotLetter = '\0';
         }
 
-        private BukkitVersion(final int major, final int minor, final int patch, final double revision, final int snapshotRelease, final int preRelease, final int releaseCandidate,
+        private BukkitVersion(final int major, final int minor, final int patch, final double revision, final int snapshotRelease, final int preRelease, final int releaseCandidate, final int paperBuild, final String releaseChannel,
                                final boolean snapshot, final int snapshotYear, final int snapshotWeek, final char snapshotLetter) {
             this.major = major;
             this.minor = minor;
@@ -229,6 +255,8 @@ public final class VersionUtil {
             this.snapshotRelease = snapshotRelease;
             this.preRelease = preRelease;
             this.releaseCandidate = releaseCandidate;
+            this.paperBuild = paperBuild;
+            this.releaseChannel = releaseChannel;
             this.snapshot = snapshot;
             this.snapshotYear = snapshotYear;
             this.snapshotWeek = snapshotWeek;
@@ -241,7 +269,7 @@ public final class VersionUtil {
             // Try standard release format first
             Matcher matcher = VERSION_PATTERN.matcher(string);
             if (matcher.matches()) {
-                return from(matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(7), matcher.group(4), matcher.group(5), matcher.group(6));
+                return from(matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(9), matcher.group(4), matcher.group(5), matcher.group(6), matcher.group(7), matcher.group(8));
             }
 
             // Try snapshot format (e.g., 25w32a-R0.1-SNAPSHOT)
@@ -263,26 +291,29 @@ public final class VersionUtil {
             }
             matcher = VERSION_PATTERN.matcher(v1_16_1_R01.toString());
             Preconditions.checkArgument(matcher.matches(), string + " is not in valid version format. e.g. 1.8.8-R0.1");
-            return from(matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(7), matcher.group(4), matcher.group(5), matcher.group(6));
+            return from(matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(9), matcher.group(4), matcher.group(5), matcher.group(6), matcher.group(7), matcher.group(8));
         }
 
-        private static BukkitVersion from(final String major, final String minor, String patch, String revision, String snapshotRelease, String preRelease, String releaseCandidate) {
+        private static BukkitVersion from(final String major, final String minor, String patch, String revision, String snapshotRelease, String preRelease, String releaseCandidate, String paperBuild, final String releaseChannel) {
             if (patch == null || patch.isEmpty()) patch = "0";
             if (revision == null || revision.isEmpty()) revision = "0";
             if (snapshotRelease == null || snapshotRelease.isEmpty()) snapshotRelease = "-1";
             if (preRelease == null || preRelease.isEmpty()) preRelease = "-1";
             if (releaseCandidate == null || releaseCandidate.isEmpty()) releaseCandidate = "-1";
+            if (paperBuild == null || paperBuild.isEmpty()) paperBuild = "-1";
             return new BukkitVersion(Integer.parseInt(major),
                 Integer.parseInt(minor),
                 Integer.parseInt(patch),
                 Double.parseDouble(revision),
                 Integer.parseInt(snapshotRelease),
                 Integer.parseInt(preRelease),
-                Integer.parseInt(releaseCandidate));
+                Integer.parseInt(releaseCandidate),
+                Integer.parseInt(paperBuild),
+                releaseChannel);
         }
 
         private static BukkitVersion fromSnapshot(final int year, final int week, final char letter, final double revision) {
-            return new BukkitVersion(-1, -1, -1, revision, -1, -1, -1, true, year, week, letter);
+            return new BukkitVersion(-1, -1, -1, revision, -1, -1, -1, -1, null, true, year, week, letter);
         }
 
         public boolean isHigherThan(final BukkitVersion o) {
@@ -329,8 +360,33 @@ public final class VersionUtil {
             return snapshotRelease;
         }
 
+        public int getPaperBuild() {
+            return paperBuild;
+        }
+
+        public String getReleaseChannel() {
+            return releaseChannel;
+        }
+
         public boolean isSnapshot() {
             return snapshot;
+        }
+
+        /**
+         * Checks if this version has the same base version (major, minor, and patch)
+         * as the given version, ignoring development specifiers (snapshot release, pre-release,
+         * release candidate, paper build numbers) and Bukkit metadata (revision).
+         * Revision is ignored because Paper versions do not include the Bukkit revision
+         * suffix (e.g. {@code -R0.1-SNAPSHOT}).
+         * This is used to match development builds against their target release version.
+         */
+        public boolean equalsBaseVersion(final BukkitVersion other) {
+            if (this.snapshot || other.snapshot) {
+                return false;
+            }
+            return this.major == other.major &&
+                this.minor == other.minor &&
+                this.patch == other.patch;
         }
 
         @Override
@@ -379,10 +435,16 @@ public final class VersionUtil {
                 sb.append("-snapshot-").append(snapshotRelease);
             }
             if (preRelease != -1) {
-                sb.append("-pre").append(preRelease);
+                sb.append("-pre-").append(preRelease);
             }
             if (releaseCandidate != -1) {
-                sb.append("-rc").append(releaseCandidate);
+                sb.append("-rc-").append(releaseCandidate);
+            }
+            if (paperBuild != -1) {
+                sb.append(".build.").append(paperBuild);
+                if (releaseChannel != null) {
+                    sb.append("-").append(releaseChannel);
+                }
             }
             return sb.append("-R").append(revision).toString();
         }
@@ -437,7 +499,13 @@ public final class VersionUtil {
                                 } else if (releaseCandidate > o.releaseCandidate) {
                                     return 1;
                                 } else { // equal release candidate
-                                    return Double.compare(revision, o.revision);
+                                    if (paperBuild < o.paperBuild) {
+                                        return -1;
+                                    } else if (paperBuild > o.paperBuild) {
+                                        return 1;
+                                    } else { // equal paper build
+                                        return Double.compare(revision, o.revision);
+                                    }
                                 }
                             }
                         }
