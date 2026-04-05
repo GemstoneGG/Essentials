@@ -503,12 +503,20 @@ public class EssentialsPlayerListener implements Listener {
             });
         }
 
+        final boolean restoreFly = user.isFlyModeEnabled() && user.isAuthorized("essentials.fly");
+        if (restoreFly) {
+            user.getBase().setAllowFlight(true);
+            if (ess.getSettings().isSendFlyEnableOnJoin()) {
+                user.sendTl("flyMode", CommonPlaceholders.enableDisable(user.getSource(), true), user.getDisplayName());
+            }
+        }
+
         if (user.isAuthorized("essentials.fly.safelogin")) {
             user.getBase().setFallDistance(0);
             if (LocationUtil.shouldFly(ess, user.getLocation())) {
                 user.getBase().setAllowFlight(true);
                 user.getBase().setFlying(true);
-                if (ess.getSettings().isSendFlyEnableOnJoin()) {
+                if (!restoreFly && ess.getSettings().isSendFlyEnableOnJoin()) {
                     user.sendTl("flyMode", CommonPlaceholders.enableDisable(user.getSource(), true), user.getDisplayName());
                 }
             }
@@ -522,6 +530,11 @@ public class EssentialsPlayerListener implements Listener {
         if (user.isSocialSpyEnabled() && !user.isAuthorized("essentials.socialspy")) {
             user.setSocialSpyEnabled(false);
             ess.getLogger().log(Level.INFO, "Set socialspy to false for {0} because they had it enabled without permission.", user.getName());
+        }
+
+        if (user.isFlyModeEnabled() && !user.isAuthorized("essentials.fly")) {
+            user.setFlyModeEnabled(false);
+            ess.getLogger().log(Level.INFO, "Set fly mode to false for {0} because they had it enabled without permission.", user.getName());
         }
 
         if (user.isGodModeEnabled() && !user.isAuthorized("essentials.god")) {
