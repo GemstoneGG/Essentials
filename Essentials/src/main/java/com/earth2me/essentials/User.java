@@ -148,6 +148,19 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
     }
 
     @Override
+    public boolean isAuthorizedCached(final String node) {
+        if (Essentials.TESTING) {
+            return false;
+        }
+
+        final boolean result = isAuthorizedCachedCheck(node);
+        if (ess.getSettings().isDebug()) {
+            ess.getLogger().log(Level.INFO, "checking if " + base.getName() + " has " + node + " (cached) - " + result);
+        }
+        return result;
+    }
+
+    @Override
     public boolean isPermissionSet(final String node) {
         if (Essentials.TESTING) {
             return false;
@@ -175,6 +188,24 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
 
         try {
             return ess.getPermissionsHandler().hasPermission(base, node);
+        } catch (final Exception ex) {
+            if (ess.getSettings().isDebug()) {
+                ess.getLogger().log(Level.SEVERE, "Permission System Error: " + ess.getPermissionsHandler().getName() + " returned: " + ex.getMessage(), ex);
+            } else {
+                ess.getLogger().log(Level.SEVERE, "Permission System Error: " + ess.getPermissionsHandler().getName() + " returned: " + ex.getMessage());
+            }
+
+            return false;
+        }
+    }
+
+    private boolean isAuthorizedCachedCheck(final String node) {
+        if (base instanceof OfflinePlayerStub) {
+            return false;
+        }
+
+        try {
+            return ess.getPermissionsHandler().hasPermissionCached(base, node);
         } catch (final Exception ex) {
             if (ess.getSettings().isDebug()) {
                 ess.getLogger().log(Level.SEVERE, "Permission System Error: " + ess.getPermissionsHandler().getName() + " returned: " + ex.getMessage(), ex);
@@ -872,7 +903,7 @@ public class User extends UserData implements Comparable<User>, IMessageRecipien
             }
         }
         final long autoafk = ess.getSettings().getAutoAfk();
-        if (!isAfk() && autoafk > 0 && lastActivity + autoafk * 1000 < System.currentTimeMillis() && isAuthorized("essentials.afk.auto")) {
+        if (!isAfk() && autoafk > 0 && lastActivity + autoafk * 1000 < System.currentTimeMillis() && isAuthorizedCached("essentials.afk.auto")) {
             setAfk(true, AfkStatusChangeEvent.Cause.ACTIVITY);
             if (isAfk() && !isHidden()) {
                 setDisplayNick();
