@@ -85,10 +85,10 @@ class EssentialsSpawnPlayerListener implements Listener {
         // Since this is Folia, the respawn handler will perform differently.
         // That said, anchor respawns are effectively stripped to mitigate issues.
         if (ess.getSettings().isRespawnAtBed()) {
-            // cannot nuke this sync load due to the event being sync so it would hand either way
-            if (VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_16_1_R01)) {
+            // cannot nuke this sync load due to the event being sync, so it would hand either way
+            if (VersionUtil.getServerBukkitVersion().isHigherThanOrEqualTo(VersionUtil.v1_20_4_R01)) {
                 respawnLocation = user.getBase().getRespawnLocation();
-            } else { // For versions prior to 1.16.
+            } else { // For versions prior to 1.20.4.
                 respawnLocation = user.getBase().getBedSpawnLocation();
             }
         }
