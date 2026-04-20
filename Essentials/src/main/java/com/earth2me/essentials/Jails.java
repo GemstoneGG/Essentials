@@ -3,6 +3,8 @@ package com.earth2me.essentials;
 import com.earth2me.essentials.config.ConfigurateUtil;
 import com.earth2me.essentials.config.EssentialsConfiguration;
 import com.earth2me.essentials.config.entities.LazyLocation;
+import io.canvasmc.canvas.event.EntityTeleportAsyncEvent;
+import io.canvasmc.canvas.event.PlayerRespawnAsyncEvent;
 import net.ess3.api.IEssentials;
 import net.ess3.api.IUser;
 import net.ess3.api.TranslatableException;
@@ -21,8 +23,6 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.plugin.PluginManager;
 import org.spongepowered.configurate.CommentedConfigurationNode;
@@ -179,7 +179,7 @@ public class Jails implements net.ess3.api.IJails {
         }
     }
 
-    private class JailListener implements Listener {
+    private final class JailListener implements Listener {
         @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
         public void onJailBlockBreak(final BlockBreakEvent event) {
             if (shouldIgnore(event.getPlayer())) {
@@ -258,7 +258,7 @@ public class Jails implements net.ess3.api.IJails {
         }
 
         @EventHandler(priority = EventPriority.HIGHEST)
-        public void onJailPlayerRespawn(final PlayerRespawnEvent event) {
+        public void onJailPlayerRespawn(final PlayerRespawnAsyncEvent event) {
             if (shouldIgnore(event.getPlayer())) {
                 return;
             }
@@ -280,12 +280,17 @@ public class Jails implements net.ess3.api.IJails {
         }
 
         @EventHandler(priority = EventPriority.HIGH)
-        public void onJailPlayerTeleport(final PlayerTeleportEvent event) {
-            if (shouldIgnore(event.getPlayer())) {
+        public void onJailPlayerTeleport(final EntityTeleportAsyncEvent event) {
+            final Entity entity = event.getEntity();
+            if (!(entity instanceof Player)) {
+                return;
+            }
+            final Player player = (Player) entity;
+            if (shouldIgnore(player)) {
                 return;
             }
 
-            final User user = ess.getUser(event.getPlayer());
+            final User user = ess.getUser(player);
             if (!user.isJailed() || user.getJail() == null || user.getJail().isEmpty()) {
                 return;
             }

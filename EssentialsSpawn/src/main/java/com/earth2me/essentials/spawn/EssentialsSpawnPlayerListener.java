@@ -6,14 +6,12 @@ import com.earth2me.essentials.User;
 import com.earth2me.essentials.textreader.IText;
 import com.earth2me.essentials.textreader.KeywordReplacer;
 import com.earth2me.essentials.utils.VersionUtil;
+import io.canvasmc.canvas.event.PlayerPostRespawnAsyncEvent;
 import net.ess3.api.IEssentials;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +34,8 @@ class EssentialsSpawnPlayerListener implements Listener {
         this.spawns = spawns;
     }
 
-    void onPlayerRespawn(final InventoryCloseEvent event) {
-        final Player player = (Player) event.getPlayer();
-        if (event.getInventory().getType() != InventoryType.CRAFTING || !player.isDead() || !player.isOnline() || player.getHealth() > 0) {
-            return;
-        }
+    void onPlayerRespawn(final PlayerPostRespawnAsyncEvent event) {
+        final Player player = event.getPlayer();
 
         final User user = ess.getUser(player);
 
@@ -167,7 +162,7 @@ class EssentialsSpawnPlayerListener implements Listener {
         }
         ess.getRandomTeleport().getRandomLocation(name).thenAccept(location -> {
             final CompletableFuture<Boolean> future = new CompletableFuture<>();
-            user.getAsyncTeleport().now(location, false, PlayerTeleportEvent.TeleportCause.PLUGIN, future);
+            user.getAsyncTeleport().now(location, false, TeleportCause.PLUGIN, future);
         });
         return true;
     }

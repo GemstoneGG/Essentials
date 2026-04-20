@@ -10,7 +10,7 @@ plugins {
 val baseExtension = extensions.create<EssentialsBaseExtension>("essentials", project)
 
 val checkstyleVersion = "8.36.2"
-val paperVersion = "1.21.11-R0.1-SNAPSHOT"
+val canvasVersion = "1.21.11-R0.1-SNAPSHOT"
 val paperTestVersion = "1.21.8-R0.1-SNAPSHOT"
 val junit5Version = "5.12.2"
 val junitPlatformVersion = "1.12.2"
@@ -48,7 +48,7 @@ tasks.test {
 afterEvaluate {
     if (baseExtension.injectBukkitApi.get()) {
         dependencies {
-            api("io.papermc.paper:paper-api:${paperVersion}")
+            api("io.canvasmc.canvas:canvas-api:${canvasVersion}")
             testImplementation("io.papermc.paper:paper-api:${paperTestVersion}")
         }
 
@@ -56,7 +56,7 @@ afterEvaluate {
             testCompileClasspath {
                 resolutionStrategy {
                     dependencySubstitution {
-                        substitute( module("io.papermc.paper:paper-api"))
+                        substitute( module("io.canvasmc.canvas:canvas-api"))
                             .using(module("io.papermc.paper:paper-api:$paperTestVersion"))
                     }
                 }
@@ -64,7 +64,7 @@ afterEvaluate {
             testRuntimeClasspath {
                 resolutionStrategy {
                     dependencySubstitution {
-                        substitute( module("io.papermc.paper:paper-api"))
+                        substitute( module("io.canvasmc.canvas:canvas-api"))
                             .using(module("io.papermc.paper:paper-api:$paperTestVersion"))
                     }
                 }

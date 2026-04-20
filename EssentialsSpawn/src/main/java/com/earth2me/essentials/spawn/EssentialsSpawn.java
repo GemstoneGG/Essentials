@@ -2,12 +2,12 @@ package com.earth2me.essentials.spawn;
 
 import com.earth2me.essentials.EssentialsLogger;
 import com.earth2me.essentials.metrics.MetricsWrapper;
+import io.canvasmc.canvas.event.PlayerPostRespawnAsyncEvent;
 import net.ess3.api.IEssentials;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -42,8 +42,8 @@ public class EssentialsSpawn extends JavaPlugin implements IEssentialsSpawn {
 
         final EventPriority respawnPriority = ess.getSettings().getRespawnPriority();
         if (respawnPriority != null) {
-            pluginManager.registerEvent(InventoryCloseEvent.class, playerListener, respawnPriority, (ll, event) ->
-                ((EssentialsSpawnPlayerListener) ll).onPlayerRespawn((InventoryCloseEvent) event), this);
+            pluginManager.registerEvent(PlayerPostRespawnAsyncEvent.class, playerListener, respawnPriority, (ll, event) ->
+                ((EssentialsSpawnPlayerListener) ll).onPlayerRespawn((PlayerPostRespawnAsyncEvent) event), this);
         }
 
         final EventPriority joinPriority = ess.getSettings().getSpawnJoinPriority();

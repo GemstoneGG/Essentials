@@ -19,6 +19,8 @@ import io.papermc.lib.PaperLib;
 import io.papermc.paper.ban.BanListType;
 import io.papermc.paper.event.connection.configuration.AsyncPlayerConnectionConfigureEvent;
 import io.papermc.paper.event.player.PlayerServerFullCheckEvent;
+import io.canvasmc.canvas.event.EntityTeleportAsyncEvent;
+import io.canvasmc.canvas.event.PlayerPostRespawnAsyncEvent;
 import net.ess3.api.IEssentials;
 import net.ess3.api.events.AfkStatusChangeEvent;
 import net.ess3.provider.CommandSendListenerProvider;
@@ -41,6 +43,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.FormattedCommandAlias;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -64,7 +67,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -177,13 +179,8 @@ public class EssentialsPlayerListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
-    public void onPlayerRespawn(final InventoryCloseEvent event) {
-        final Player player = (Player) event.getPlayer();
-        if (event.getInventory().getType() != InventoryType.CRAFTING || !player.isDead() || !player.isOnline() || player.getHealth() > 0) {
-            return;
-        }
-
-        final User user = ess.getUser(player.getUniqueId());
+    public void onPlayerRespawn(final PlayerPostRespawnAsyncEvent event) {
+        final User user = ess.getUser(event.getPlayer());
         updateCompass(user);
         user.setDisplayNick();
 
@@ -727,8 +724,12 @@ public class EssentialsPlayerListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onPlayerTeleport(final PlayerTeleportEvent event) {
-        final Player player = event.getPlayer();
+    public void onPlayerTeleport(final EntityTeleportAsyncEvent event) {
+        final Entity entity = event.getEntity();
+        if (!(entity instanceof Player)) {
+            return;
+        }
+        final Player player = (Player) entity;
         if (player.hasMetadata("NPC") || !(event.getCause() == TeleportCause.PLUGIN || event.getCause() == TeleportCause.COMMAND)) {
             return;
         }

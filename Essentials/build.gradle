@@ -23,10 +23,10 @@ dependencies {
         exclude(module: 'spigot-api')
     }
     api(project(path: ':providers:PaperProvider', configuration: 'shadow')) {
-        exclude(module: 'paper-api')
+        exclude(module: 'canvas-api')
     }
     api(project(':providers:FoliaProvider')) {
-        exclude(module: 'paper-api')
+        exclude(module: 'canvas-api')
     }
     api(project(':providers:NMSReflectionProvider')) {
         exclude(module: 'bukkit')
