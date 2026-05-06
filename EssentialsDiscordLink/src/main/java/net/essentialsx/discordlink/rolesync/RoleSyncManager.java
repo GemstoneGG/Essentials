@@ -2,6 +2,7 @@ package net.essentialsx.discordlink.rolesync;
 
 import com.earth2me.essentials.UUIDPlayer;
 import com.google.common.collect.BiMap;
+import net.ess3.provider.SchedulingProvider;
 import net.essentialsx.api.v2.events.discordlink.DiscordLinkStatusChangeEvent;
 import net.essentialsx.api.v2.services.discord.InteractionRole;
 import net.essentialsx.discordlink.EssentialsDiscordLink;
@@ -10,7 +11,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +30,7 @@ public class RoleSyncManager implements Listener {
     private final Map<String, InteractionRole> groupToRoleMap = new HashMap<>();
     private final Map<String, String> roleIdToGroupMap = new HashMap<>();
     private final Semaphore syncSemaphore = new Semaphore(5);
-    private BukkitTask syncTask;
+    private final SchedulingProvider.EssentialsTask syncTask;
     private int syncCursor = 0;
 
     public RoleSyncManager(final EssentialsDiscordLink ess) {
@@ -89,7 +89,7 @@ public class RoleSyncManager implements Listener {
                      final boolean primaryOnly, final boolean removeGroups, final boolean removeRoles) {
         final List<String> groups = primaryOnly ?
                 Collections.singletonList(ess.getEss().getPermissionsHandler().getGroup(player)) : ess.getEss().getPermissionsHandler().getGroups(player);
-        ess.getEss().runTaskAsynchronously(() -> {
+        this.ess.getEss().runTaskAsynchronously(() -> {
             try {
                 if (!syncSemaphore.tryAcquire(5, TimeUnit.SECONDS)) {
                     return;

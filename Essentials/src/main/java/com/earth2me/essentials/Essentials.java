@@ -146,6 +146,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -153,6 +154,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static com.earth2me.essentials.I18n.tlLiteral;
 import static com.earth2me.essentials.I18n.tlLocale;
@@ -913,6 +915,11 @@ public class Essentials extends JavaPlugin implements net.ess3.api.IEssentials {
         }
     }
 
+    @Override
+    public List<Player> getJailedPlayers() {
+        return getUsers().getAllUserUUIDs().stream().map(this::getUser).filter(Objects::nonNull).filter(User::isJailed).map(User::getBase).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+    
     @Override
     public IJails getJails() {
         return jails;
