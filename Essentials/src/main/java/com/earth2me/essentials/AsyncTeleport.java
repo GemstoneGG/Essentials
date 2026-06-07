@@ -382,28 +382,30 @@ public class AsyncTeleport implements IAsyncTeleport {
 
     void respawnNow(final IUser teleportee, final TeleportCause cause, final CompletableFuture<Boolean> future) {
         final Player player = teleportee.getBase();
-        PaperLib.getBedSpawnLocationAsync(player, true).thenAccept(location -> {
-            if (location != null) {
-                nowAsync(teleportee, new LocationTarget(location), cause, future);
-            } else {
-                if (ess.getSettings().isDebug()) {
-                    ess.getLogger().info("Could not find bed spawn, forcing respawn event.");
-                }
-                final PlayerRespawnAsyncEvent pre = new PlayerRespawnAsyncEvent(
-                        player,
-                        player.getWorld().getSpawnLocation(),
-                        false,
-                        false,
-                        true,
-                        PlayerRespawnEvent.RespawnReason.PLUGIN
-                );
-                ess.getServer().getPluginManager().callEvent(pre);
-                nowAsync(teleportee, new LocationTarget(pre.getRespawnLocation()), cause, future);
-            }
-        }).exceptionally(th -> {
+        final Location location;
+        try {
+            location = player.getRespawnLocation(false);
+        } catch (final Throwable th) {
             future.completeExceptionally(th);
-            return null;
-        });
+            return;
+        }
+        if (location != null) {
+            nowAsync(teleportee, new LocationTarget(location), cause, future);
+        } else {
+            if (ess.getSettings().isDebug()) {
+                ess.getLogger().info("Could not find bed spawn, forcing respawn event.");
+            }
+            final PlayerRespawnAsyncEvent pre = new PlayerRespawnAsyncEvent(
+                    player,
+                    player.getWorld().getSpawnLocation(),
+                    false,
+                    false,
+                    true,
+                    PlayerRespawnEvent.RespawnReason.PLUGIN
+            );
+            ess.getServer().getPluginManager().callEvent(pre);
+            nowAsync(teleportee, new LocationTarget(pre.getRespawnLocation()), cause, future);
+        }
     }
 
     @Override

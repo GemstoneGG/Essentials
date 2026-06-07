@@ -5,7 +5,6 @@ import com.earth2me.essentials.Trade;
 import com.earth2me.essentials.User;
 import com.earth2me.essentials.adventure.AdventureUtil;
 import com.earth2me.essentials.utils.StringUtil;
-import io.papermc.lib.PaperLib;
 import net.ess3.api.TranslatableException;
 import net.ess3.api.events.UserTeleportHomeEvent;
 import org.bukkit.Location;
@@ -48,24 +47,22 @@ public class Commandhome extends EssentialsCommand {
                 if (!player.getBase().isOnline() || player.getBase() instanceof OfflinePlayerStub) {
                     throw new TranslatableException("bedOffline");
                 }
-                PaperLib.getBedSpawnLocationAsync(player.getBase(), true).thenAccept(location -> {
-                    final CompletableFuture<Boolean> future = getNewExceptionFuture(user.getSource(), commandLabel);
-                    if (location != null) {
-                        final UserTeleportHomeEvent event = new UserTeleportHomeEvent(user, "bed", location, UserTeleportHomeEvent.HomeType.BED);
-                        server.getPluginManager().callEvent(event);
-                        if (event.isCancelled()) {
-                            return;
-                        }
+                final Location location = player.getBase().getRespawnLocation(false);
+                final CompletableFuture<Boolean> future = getNewExceptionFuture(user.getSource(), commandLabel);
+                if (location != null) {
+                    final UserTeleportHomeEvent event = new UserTeleportHomeEvent(user, "bed", location, UserTeleportHomeEvent.HomeType.BED);
+                    server.getPluginManager().callEvent(event);
+                    if (!event.isCancelled()) {
                         future.thenAccept(success -> {
                             if (success) {
                                 user.sendTl("teleportHome", "bed");
                             }
                         });
                         user.getAsyncTeleport().teleport(location, charge, TeleportCause.COMMAND, future);
-                    } else {
-                        showError(user.getBase(), new TranslatableException("bedMissing"), commandLabel);
                     }
-                });
+                } else {
+                    showError(user.getBase(), new TranslatableException("bedMissing"), commandLabel);
+                }
                 throw new NoChargeException();
             }
             goHome(user, player, homeName.toLowerCase(Locale.ENGLISH), charge, getNewExceptionFuture(user.getSource(), commandLabel));
@@ -113,7 +110,7 @@ public class Commandhome extends EssentialsCommand {
                 message.complete(null);
                 return;
             }
-            PaperLib.getBedSpawnLocationAsync(player.getBase(), true).thenAccept(message::complete);
+            message.complete(player.getBase().getRespawnLocation(false));
         }
         throw new NoChargeException();
     }
